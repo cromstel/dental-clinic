@@ -51,6 +51,10 @@ lighthouse-*.json
 
 # env files
 .env*
+.env*.local
+
+# vercel
+.vercel
 
 # typescript
 *.tsbuildinfo
