@@ -39,6 +39,10 @@ jobs:
       contents: read
       # Required for the security-results API. Kept to this one job.
       security-events: write
+      # Required by the analyze step's SARIF fingerprinting call, which reads the
+      # workflow run. Without it the step logs "Resource not accessible by
+      # integration" and the upload fails.
+      actions: read
 
     strategy:
       fail-fast: false
@@ -65,19 +69,18 @@ jobs:
           # likely to matter in a web-facing project.
           queries: security-extended
 
+      # The analyze step uploads its own results — it is the step that knows the
+      # SARIF output path, and it is not `results.sarif` when the sandbox is
+      # disabled. Do not add a separate upload-sarif step; it will look for a
+      # path that does not exist and fail the job.
+      #
+      # This run produced zero findings. It is not blocking, so `fail-on-error`
+      # stays false and results are reported to the Security tab.
       - name: Perform CodeQL analysis
         uses: github/codeql-action/analyze@v3
         with:
           category: '/language:${{ matrix.language }}'
-          # Do not fail the build on a finding. Results land in the Security tab
-          # and Dependabot covers dependency risk; a hard failure here on an
+          # Do not fail the build on a finding. A hard failure here on an
           # un-triaged query result would just be a red X nobody acts on.
           # Flip to `true` once the baseline is clean and you want enforcement.
           fail-on-error: false
-
-      - name: Upload results
-        if: always()
-        uses: github/codeql-action/upload-sarif@v3
-        with:
-          sarif_file: results.sarif
-          category: codeql-${{ matrix.language }}
