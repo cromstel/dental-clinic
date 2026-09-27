@@ -35,6 +35,23 @@ jobs:
   analyze:
     name: Analyze
     runs-on: ubuntu-latest
+
+    # Code scanning is a repository setting, not something the workflow can turn
+    # on. On a private repo it requires GitHub Advanced Security; until that is
+    # enabled the analyze step exits with:
+    #
+    #   Code scanning is not enabled for this repository
+    #
+    # and the job would go red on every push for a reason that is not a code
+    # problem. continue-on-error keeps the run green and still executes the
+    # analysis, so the moment the setting is enabled the results start landing
+    # with no workflow change at all.
+    #
+    # TO ENABLE: Settings -> Code security and quality -> Code scanning -> Set
+    # up (or Advanced Security). Then delete this continue-on-error line to make
+    # CodeQL results blocking.
+    continue-on-error: true
+
     permissions:
       contents: read
       # Required for the security-results API. Kept to this one job.
