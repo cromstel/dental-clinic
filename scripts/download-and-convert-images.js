@@ -3,6 +3,25 @@ const fs = require('fs');
 const path = require('path');
 const sharp = require('sharp');
 
+// Escape untrusted text before it reaches a log line.
+//
+// URLs and HTTP error messages originate outside this process. Written raw they
+// can carry ANSI escapes or newline sequences, which corrupt CI logs and can
+// forge log lines that look like a different severity. CodeQL flags this as
+// js/log-injection; this is the fix it wants.
+//
+// Only affects formatting — the returned value is for humans reading the log,
+// never for control flow or filenames.
+function logSafe(value) {
+  return String(value)
+    // Strip C0 control characters (except tab) and the C1 range, then the
+    // ESC that introduces ANSI sequences.
+    // eslint-disable-next-line no-control-regex
+    .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F-\u009F]/g, '')
+    .replace(/[\r\n]+/g, ' ')
+    .slice(0, 300);
+}
+
 const IMAGES_DIR = path.join(__dirname, '..', 'public', 'images');
 const SERVICES_DIR = path.join(IMAGES_DIR, 'services');
 const DOCTORS_DIR = path.join(IMAGES_DIR, 'doctors');
@@ -100,7 +119,7 @@ async function downloadWithBackup(primaryUrl, backupUrl, outputPath) {
       await downloadImage(backupUrl, outputPath);
       return true;
     } catch (err2) {
-      console.error(`  Both failed: ${err2.message}`);
+      console.error(`  Both failed: ${logSafe(err2 && err2.message)}`);
       return false;
     }
   }
@@ -118,7 +137,7 @@ async function convertToAvif(inputPath, outputPath, width, height) {
     console.log(`Converted: ${path.basename(outputPath)}`);
     return true;
   } catch (err) {
-    console.error(`Failed to convert ${inputPath}:`, err.message);
+    console.error(`Failed to convert ${logSafe(inputPath)}:`, logSafe(err && err.message));
     return false;
   }
 }
@@ -164,7 +183,7 @@ async function processImages() {
       }
       console.log(`Downloaded: ${path.basename(img.inputPath)}`);
     } catch (err) {
-      console.error(`Failed to download ${img.url}:`, err.message);
+      console.error(`Failed to download ${logSafe(img.url)}:`, logSafe(err && err.message));
     }
   }
 
