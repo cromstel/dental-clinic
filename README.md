@@ -158,16 +158,17 @@ Node version is pinned in `.nvmrc` (currently 22). Use it locally too (`nvm use`
 `.github/workflows/codeql.yml` runs CodeQL on push to `main`, on every PR, weekly, and on manual dispatch, using the `security-extended` suite. Findings are **blocking** — `fail-on-error: true` semantics apply via the job, so a new alert fails the run and the results appear in the Security tab. Zero open alerts at time of writing.
 
 ### Branch protection
-`main` is protected by a `ci-gate` ruleset:
+`main` carries full branch protection:
 
-- **Required status checks:** Lint, Typecheck, Build static export, Dependency audit, Workflow sanity — all must pass before a push or merge lands
-- **Branch deletion** blocked
-- **Force-push** blocked
+- **Required status checks:** Lint, Typecheck, Build static export, Dependency audit, Workflow sanity
+- **Required pull request review:** 1 approving review, stale reviews dismissed on push, last-push approval required
+- **Enforced on admins** — a maintainer cannot bypass it
+- **Linear history**, no force-push, no branch deletion, review threads must be resolved
 
-In practice this means you cannot push straight to `main`: a direct push is rejected with `GH013` until the checks have run on that commit. Work on a branch and open a PR. That is the intended path, not a workaround.
+Direct pushes to `main` are rejected. Branch → PR is the only path — see `CONTRIBUTING.md`.
 
 ### Repository visibility
-The repository is **public**. `LICENSE` is proprietary/all-rights-reserved, but a licence asserts rights rather than enforcing them — the source is clonable. There is no patient data in the repo: images are generated placeholders, reviews are first-name-plus-neighbourhood, and the enquiry form is `mailto:` with no server. If visibility ever needs to change, the code scanning and ruleset behaviour differs between the two, so re-read this section after changing it.
+The repository is **public**, deliberately: branch protection and code scanning are plan-gated on private repositories. `LICENSE` is proprietary/all-rights-reserved, but a licence asserts rights rather than enforcing them, so the source is readable and clonable. There is no patient data in the repo. See `SECURITY.md` for the full threat model and what is not protected.
 
 ### Dependency updates
 `.github/dependabot.yml` opens PRs on three schedules: weekly grouped bumps for production and dev tooling, **daily ungrouped** security fixes, and weekly `github-actions` updates. Grouped PRs are never auto-merged — CI is the gate.

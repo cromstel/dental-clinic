@@ -13,7 +13,7 @@ git push -u origin <branch>
 gh pr create --fill
 ```
 
-Required checks on `main`: **Lint, Typecheck, Build static export, Dependency audit, Workflow sanity**. All five must pass. Branch deletion and force-pushes are blocked.
+Required checks on `main`: **Lint, Typecheck, Build static export, Dependency audit, Workflow sanity**. All five must pass, plus **1 approving review** with stale reviews dismissed on push. Protection is enforced on admins, so a maintainer cannot merge their own PR unreviewed. Linear history only — no merge commits.
 
 `nvm use` first — Node is pinned in `.nvmrc`.
 
