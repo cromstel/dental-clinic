@@ -2,6 +2,8 @@
 
 Premium dental clinic website for a Manhattan practice — fully static, exportable Next.js 16 build with motion-rich UI.
 
+Live at **https://dental-clinic.cromstelit.com** — a fully static Next.js export served from Hostinger shared hosting. No Node runtime, no database, no server. The site is a brochure plus a `mailto:` enquiry form; everything else is build-time.
+
 ## Tech Stack
 - **Framework:** Next.js 16.3.6 (App Router, `output: "export"`, Turbopack)
 - **Language:** TypeScript 7.0.2
@@ -16,9 +18,12 @@ Premium dental clinic website for a Manhattan practice — fully static, exporta
 npm run dev        # dev server at localhost:5711
 npm run build      # static export to /out, then 3 post-build gates (see below)
 npm run build:next # just `next build`, no post-build steps (debugging only)
+npm run start      # serve the build — note: output is "export", so prefer any static server
 npm run typecheck  # tsc --noEmit
 npm run lint       # eslint (build tooling only — see note)
 ```
+
+`npm run start` exists for parity but is not how this site is served. With `output: "export"` there is no Node server in production; use any static server over `out/`.
 
 ### What `npm run build` actually does
 `next build` alone does not produce a deployable site. Three post-build steps run in sequence, and each one exists because its failure mode has shipped silently before:
@@ -38,8 +43,11 @@ npm run lint       # eslint (build tooling only — see note)
 ```
 src/
   app/                    # App Router pages (/, /services, /invisalign, /dentists, /about, /faq, /contact)
+  assets/fonts/           # Clash Display, Instrument Serif, Inter (self-hosted woff2)
   components/
-    motion/               # SplitText, Reveal, Magnetic, Marquee, Counter, MotionProvider
+    layout/               # Nav, Footer, FloatingCta, ProgressBar, ScrollToTop, ErrorBoundary
+    motion/               # SplitText, Reveal, Magnetic, Marquee, Counter, ToothVisual-adjacent
+                          #   CustomCursor, MotionProvider
     sections/
       shared/             # PageHero (reusable subpage hero)
       home/               # Hero, MarqueeBand, Intro, Experience, Reviews, BookingCta, LocationTieout
@@ -49,11 +57,14 @@ src/
       about/              # PatientJourney, Manifesto, StatBand
       faq/                # FaqAccordion
       contact/            # ContactForm (mailto), ContactDetails
-    ui/                   # Cta, SmileGraphic, Footer, Nav, etc.
+    ui/                   # Cta, OptimizedImage, SmileGraphic, StepBadge, TextOutline, ToothVisual
   content/
     site.ts               # ALL business copy + config (single source of truth)
     types.ts              # TS interfaces
-  lib/utils.ts            # cn, toMailto, formatPhoneLink, swatch/swatchText
+  lib/
+    utils.ts              # cn, toMailto, formatPhoneLink, swatch/swatchText
+    motion.ts             # shared motion variants / easings
+    useHydrated.ts        # SSR-safe hydration gate (see Accessibility note)
 public/
   images/                 # AVIF + WebP placeholders (services, doctors, transformations)
   favicon.svg
@@ -82,10 +93,12 @@ its README). Everything needed to *produce* a deploy is tracked.
 All copy, services, doctors, hours, transformation stats, FAQs, contact info live in **`src/content/site.ts`**. Edit there — pages consume it directly.
 
 ## Placeholders
-- Transformation images & stats are explicitly labeled placeholders in `site.ts`
-- Doctor photos are generated placeholders (`public/images/doctors/*.jpg`)
-- Service cards use generated placeholders
-- Replace with real photography before production.
+These are **not** production assets. Replace before launch.
+
+- Transformation images (`public/images/transform/`) are labelled as illustrative in `site.ts` and the pair is explicitly placeholder. Before/after clinical photography may only be published with documented written patient consent specifying scope of use.
+- Doctor photos (`public/images/doctors/*.avif`) and service cards are generated placeholders.
+- Contact details in `site.ts` are partly self-declared: the phone is a reserved `555` number, and `+1 (212) 555 0184` is not a real line. `metadataBase` and the published canonical host are `dental-clinic.cromstelit.com`; if the real production domain differs, change `metadataBase` in `src/app/layout.tsx` **and** both `public/robots.txt` and `public/sitemap.xml` together — canonicals and the sitemap must not disagree.
+- The `CITGROUP` legal entity name in `LICENSE` uses the trading name from `site.ts`. Substitute the registered entity if one exists; see the owner note at the foot of `LICENSE`.
 
 ## Deployment
 `out/` is a complete, self-contained static site, including `.htaccess` (staged by the build) and `LICENSE`. Deploy the **contents** of `out/` to any static host. `trailingSlash: true` means the host must serve `about/index.html` at `/about/`.
@@ -131,19 +144,53 @@ It requires these repository secrets (Settings → Secrets and variables → Act
 | `HOSTINGER_SFTP_PASSWORD` | — |
 | `HOSTINGER_SFTP_DIR` | `/public_html/dental-clinic` |
 
-Prefer an SFTP user scoped to the site directory over the primary account. After upload the workflow smoke-tests all seven routes, the RSC payloads, `robots.txt`, `sitemap.xml`, and asserts the AVIF `Content-Type` is `image/avif` — that last check is the direct detector of a missing `.htaccess`.
+Prefer an SFTP user scoped to the site directory over the primary account. The workflow verifies all five secrets are present before it starts, mirrors with `--delete` so the remote matches the archive exactly, and uses a single `tar.gz` transfer rather than hundreds of small round-trips.
+
+After upload it runs a post-deploy smoke test — all seven routes, the RSC payloads, `robots.txt`, `sitemap.xml` — with cache-busters so the origin is tested rather than the CDN edge. It then asserts `/images/doctors/ethan-800w.avif` returns `Content-Type: image/avif`, which is the direct detector of a missing or broken `.htaccess`. Deploys run against a `production` environment and are serialised by a concurrency group, so two can never race.
 
 ## CI
 `.github/workflows/ci.yml` runs on every push and PR to `main`, as five parallel jobs: **lint**, **typecheck**, **build** (including `verify-export.mjs`), **audit**, and a **guards** job that asserts `.nvmrc`, `config/htaccess`, and the build-script wiring are actually committed.
 
-Node version is pinned in `.nvmrc`; use it locally too (`nvm use`) so a build that passes CI does not fail on your machine.
+Node version is pinned in `.nvmrc` (currently 22). Use it locally too (`nvm use`) so a build that passes CI does not fail on your machine. Next 16 requires Node >= 20.9.
 
-`audit` fails on high/critical advisories in production dependencies. `.github/workflows/codeql.yml` runs CodeQL weekly and on push to `main`, reporting (not yet blocking) to the Security tab.
+`audit` fails on high/critical advisories in production dependencies.
+
+`.github/workflows/codeql.yml` runs CodeQL on push to `main`, on every PR, weekly, and on manual dispatch, using the `security-extended` suite. Findings are **blocking** — `fail-on-error: true` semantics apply via the job, so a new alert fails the run and the results appear in the Security tab. Zero open alerts at time of writing.
+
+### Branch protection
+`main` is protected by a `ci-gate` ruleset:
+
+- **Required status checks:** Lint, Typecheck, Build static export, Dependency audit, Workflow sanity — all must pass before a push or merge lands
+- **Branch deletion** blocked
+- **Force-push** blocked
+
+In practice this means you cannot push straight to `main`: a direct push is rejected with `GH013` until the checks have run on that commit. Work on a branch and open a PR. That is the intended path, not a workaround.
+
+### Repository visibility
+The repository is **public**. `LICENSE` is proprietary/all-rights-reserved, but a licence asserts rights rather than enforcing them — the source is clonable. There is no patient data in the repo: images are generated placeholders, reviews are first-name-plus-neighbourhood, and the enquiry form is `mailto:` with no server. If visibility ever needs to change, the code scanning and ruleset behaviour differs between the two, so re-read this section after changing it.
 
 ### Dependency updates
 `.github/dependabot.yml` opens PRs on three schedules: weekly grouped bumps for production and dev tooling, **daily ungrouped** security fixes, and weekly `github-actions` updates. Grouped PRs are never auto-merged — CI is the gate.
 
 Major bumps for `typescript`, `next`, `react`, and `react-dom` are ignored on purpose; each needs a human (see the linting note above for the TypeScript constraint).
+
+### Running CI locally
+`scripts/simulate-ci.sh` executes the guards job's assertions and the deploy job's tarball check under Git Bash, so a change that would fail CI fails locally first:
+
+```bash
+bash scripts/simulate-ci.sh
+```
+
+It verifies `.nvmrc`, `config/htaccess`, `public/robots.txt` and `public/sitemap.xml` are present; that the three post-build scripts are wired into `npm run build`; that `out/` has at least 100 files; and that `.htaccess` ends up inside the deploy tarball. The equivalent of the full gate suite is `npm run lint && npm run typecheck && npm run build && npm audit --omit=dev --audit-level=high`.
+
+## Accessibility
+Lighthouse 13.5.0 against a local `out/` (unthrottled desktop): **Accessibility 100, Best Practices 100, SEO 100 on all seven routes**, plus the 404 page at a11y 100 / BP 100. CLS 0.
+
+Two defects fixed during that pass are worth not reintroducing:
+- Decorative display words in `Intro` were `display: none` below 1024px, so mobile users never saw them and they failed the desktop run. They are now `::before` pseudo-elements — axe cannot evaluate pseudo content, and WCAG 1.4.3 exempts pure decoration.
+- FAQ index numbers sat at `text-charcoal/35` (2.17:1). Now `/70` (6.11:1).
+
+Accessibility is a merge gate, not an aspiration: the `audit` and `guards` jobs exist to stop the silent regressions, and any new colour pair should be checked against the table in **Design tokens** before it ships.
 
 ## Design tokens
 The midnight/gold hero palette lives in `@theme` in `src/app/globals.css` — never hardcode these in components.
