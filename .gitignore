@@ -1,0 +1,57 @@
+# dependencies
+/node_modules
+/.pnp
+.pnp.*
+
+# testing
+/coverage
+
+# next.js
+/.next/
+/out/
+
+# production
+/build
+
+# deploy artifacts — generated output, reproduce with `npm run build`.
+# The host config that these deploys depend on is tracked at config/htaccess,
+# not here: losing it silently breaks AVIF rendering on the live site.
+/deploy/
+export.tar.gz
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Local-only: agent toolchain + working documents. Not part of the product and
+# not wanted in the shared repository.
+#
+# AGENTS.md is re-created automatically by `next dev` (see
+# node_modules/next/dist/server/lib/generate-agent-files.js), so ignoring it
+# avoids a permanently dirty working tree for anyone who runs the dev server.
+# CLAUDE.md is a one-line pointer to AGENTS.md.
+/AGENTS.md
+/CLAUDE.md
+/AUDIT_REPORT.md
+/prompts/
+
+# misc
+*.pem
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# build logs & one-off audit scratch (regenerate, never commit)
+build-output.txt
+lighthouse-*.json
+/live-*.html
+/check_*.py
+
+# env files
+.env*
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts

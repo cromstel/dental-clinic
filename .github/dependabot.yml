@@ -1,0 +1,106 @@
+# Dependency and Actions update automation.
+#
+# Two update streams with deliberately different cadences:
+#
+#   npm + github-actions  weekly, grouped. Security fixes reach you in days via
+#                         the security-updates stream below, so the weekly stream
+#                         is for feature/minor bumps and is batched to avoid PR
+#                         spam. Grouping keeps a React minor + a Tailwind minor +
+#                         the tooling that moves with them in a single PR.
+#
+#   security-updates      immediate, ungrouped. Never batched and never delayed:
+#                         these are CVEs against code that is deployed to
+#                         production, and a grouped PR that fails CI is worse than
+#                         a slightly noisier one.
+#
+# This is the primary remediation path for the `audit` job in ci.yml. That job
+# exists for the case where an advisory lands and no fixed version exists yet.
+
+version: 2
+
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: '06:00'
+      timezone: Etc/UTC
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: 'chore(deps)'
+    groups:
+      # All production runtime deps together — they ship as one unit and are
+      # tested together by the build.
+      production:
+        dependency-type: production
+        patterns:
+          - '*'
+        update-types:
+          - minor
+          - patch
+      # Dev tooling moves together; a lone ESLint bump against an old
+      # eslint-config-next is a broken combo.
+      dev-tooling:
+        dependency-type: development
+        patterns:
+          - '*'
+        update-types:
+          - minor
+          - patch
+    labels:
+      - dependencies
+      - ci
+    # Grouped PRs must not auto-merge: the build gate is the point.
+    ignore:
+      # Typescript is pinned deliberately. typescript-eslint does not support
+      # TS 7 yet (see eslint.config.mjs), and an unattended major bump would
+      # change the toolchain under a green test run.
+      - dependency-name: typescript
+        update-types:
+          - version-update:semver-major
+      # Next majors carry breaking changes to the export and to the RSC payload
+      # filenames that scripts/rsc-payload-fix.mjs depends on. That needs a human
+      # and a manual verification pass, not a bot.
+      - dependency-name: next
+        update-types:
+          - version-update:semver-major
+      - dependency-name: react
+        update-types:
+          - version-update:semver-major
+      - dependency-name: react-dom
+        update-types:
+          - version-update:semver-major
+
+  # Immediate, unbatched CVE fixes across every ecosystem in the repo.
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: daily
+    open-pull-requests-limit: 5
+    labels:
+      - dependencies
+      - security
+    commit-message:
+      prefix: 'fix(deps)'
+    groups: {}          # deliberately empty: never batch a security fix
+    ignore: []
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: '06:30'
+      timezone: Etc/UTC
+    open-pull-requests-limit: 5
+    labels:
+      - dependencies
+      - ci
+    commit-message:
+      prefix: 'chore(actions)'
+    groups:
+      actions:
+        patterns:
+          - '*'
+    ignore: []

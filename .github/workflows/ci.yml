@@ -1,0 +1,163 @@
+name: CI
+
+# Gates every push and pull request. Deliberately narrow and fast: each job must
+# catch a class of defect that has actually shipped from this build before, and
+# nothing else. A slow gate gets ignored, which is worse than no gate.
+#
+# Failure modes this is built to catch:
+#   lint       — errors in the build/deploy plumbing (scripts/, config)
+#   typecheck  — type errors in src/ (also the only "lint" src/ gets; see the
+#                note in eslint.config.mjs about TS 7 / typescript-eslint)
+#   build      — the static export, including scripts/verify-export.mjs, which
+#                fails on missing RSC payloads, a missing .htaccess, a route
+#                dropped from the sitemap, or source leakage into out/
+#   audit      — known CVEs in the dependency tree
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+# Cancel superseded runs on the same ref. Never cancel main — those are the runs
+# that gate a merge.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      # `npm ci` (not `install`) so CI fails on a lockfile that is out of sync
+      # with package.json rather than silently resolving something new.
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+  typecheck:
+    name: Typecheck
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+  build:
+    name: Build static export
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      # Runs verify-export.mjs, which is where the real assertions live.
+      - name: Build
+        run: npm run build
+
+      # Cheap guard against a regression in the assertion script itself: if out/
+      # is empty, verify-export would have a field day.
+      - name: Confirm export is non-trivial
+        run: |
+          count=$(find out -type f | wc -l)
+          echo "out/ contains $count files"
+          if [ "$count" -lt 100 ]; then
+            echo "::error::out/ has only $count files; the static export is incomplete"
+            exit 1
+          fi
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: static-export
+          path: out/
+          retention-days: 14
+          if-no-files-found: error
+
+  audit:
+    name: Dependency audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      # --audit-level=high: moderate/low advisories in transitive dev-only
+      # packages are noise that train people to ignore this job. High and
+      # critical fail the build.
+      #
+      # Dependabot (see .github/dependabot.yml) is the primary remediation path;
+      # this job is the backstop for when an advisory is published and no fixed
+      # version exists yet.
+      - name: Audit production dependencies
+        run: npm audit --omit=dev --audit-level=high
+
+      - name: Report full audit (non-blocking)
+        run: npm audit --audit-level=low || true
+
+  guards:
+    name: Workflow sanity
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      # Confirms the two files the whole pipeline depends on are actually
+      # committed. Losing either silently disables real protection:
+      #   .nvmrc          -> setup-node falls back to a version we never test on
+      #   config/htaccess -> build fails, or worse, ships without MIME rules
+      - name: Assert critical build inputs are tracked
+        run: |
+          set -e
+          for f in .nvmrc config/htaccess public/robots.txt public/sitemap.xml; do
+            if [ ! -f "$f" ]; then
+              echo "::error::required file missing: $f"
+              exit 1
+            fi
+            echo "  present: $f"
+          done
+
+      - name: Assert build scripts are wired into `npm run build`
+        run: |
+          set -e
+          scripts=$(node -p "require('./package.json').scripts.build")
+          echo "  build = $scripts"
+          for s in rsc-payload-fix stage-server-config verify-export; do
+            case "$scripts" in
+              *"$s"*) echo "  wired: $s" ;;
+              *) echo "::error::build script not wired into npm run build: $s"; exit 1 ;;
+            esac
+          done

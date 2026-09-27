@@ -1,0 +1,211 @@
+name: Deploy
+
+# Publishes the static export to Hostinger over SFTP.
+#
+# NOT WIRED TO PUSH ON PURPOSE. This workflow is `workflow_dispatch` only,
+# because a deploy replaces production and the `.htaccess` is load-bearing. The
+# sequence that broke this site before was: build artifact uploaded, .htaccess
+# left behind on the local machine, AVIF silently served as text/plain. Firing
+# this from a push re-creates that class of accident at machine speed.
+#
+# CI gates every push. Deploy is a deliberate human action.
+#
+# Required repository secrets (Settings -> Secrets and variables -> Actions):
+#   HOSTINGER_SFTP_HOST     e.g. ftp.us.hostinger.com
+#   HOSTINGER_SFTP_PORT     e.g. 65002
+#   HOSTINGER_SFTP_USER     SFTP user created in hPanel
+#   HOSTINGER_SFTP_PASSWORD
+#   HOSTINGER_SFTP_DIR      remote directory, e.g. /public_html/dental-clinic
+#
+# Prefer an SFTP user scoped to the site directory over the primary FTP account.
+
+on:
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: 'Why is this deploy happening?'
+        required: true
+        type: string
+      confirm:
+        description: 'Type DEPLOY to confirm replacing production'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+# Never let two deploys run at once — a partial upload from one racing another
+# is worse than either alone.
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  verify-inputs:
+    name: Confirm deploy request
+    runs-on: ubuntu-latest
+    steps:
+      # A deliberate gate. A mistyped confirmation should not be able to publish.
+      - name: Require explicit confirmation
+        if: inputs.confirm != 'DEPLOY'
+        run: |
+          echo "::error::confirmation string must be exactly DEPLOY (got '${{ inputs.confirm }}')"
+          exit 1
+
+  build:
+    name: Build
+    needs: verify-inputs
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - run: npm ci
+
+      # verify-export.mjs runs here too, so a broken export can never reach SFTP.
+      - name: Build
+        run: npm run build
+
+      - name: Package export as a tarball
+        # Single archive: avoids hundreds of small SFTP round-trips, which is
+        # where partial uploads come from. `out/` is the archive root so paths
+        # land directly in the remote directory with no wrapping folder.
+        run: |
+          set -e
+          tar -czf export.tar.gz -C out .
+          echo "archive: $(du -h export.tar.gz | cut -f1)"
+          # Sanity: the .htaccess must be inside the archive, not just in out/.
+          if ! tar -tzf export.tar.gz | grep -q '^\./\.htaccess$'; then
+            echo "::error::.htaccess missing from archive — the deploy would break AVIF rendering"
+            exit 1
+          fi
+          echo "  .htaccess present in archive"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: export-tarball
+          path: export.tar.gz
+          retention-days: 7
+          if-no-files-found: error
+
+  deploy:
+    name: Upload to Hostinger
+    needs: build
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: export-tarball
+
+      # Same SFTP client Hostinger documents for scripted uploads.
+      - name: Install lftp
+        run: sudo apt-get update && sudo apt-get install -y lftp
+
+      - name: Verify secrets are present
+        env:
+          HOST: ${{ secrets.HOSTINGER_SFTP_HOST }}
+          PORT: ${{ secrets.HOSTINGER_SFTP_PORT }}
+          USER: ${{ secrets.HOSTINGER_SFTP_USER }}
+          PASS: ${{ secrets.HOSTINGER_SFTP_PASSWORD }}
+          DIR: ${{ secrets.HOSTINGER_SFTP_DIR }}
+        run: |
+          set -e
+          missing=0
+          for v in HOST PORT USER PASS DIR; do
+            if [ -z "${!v}" ]; then
+              echo "::error::missing repository secret: HOSTINGER_SFTP_$v"
+              missing=1
+            fi
+          done
+          [ "$missing" -eq 0 ] || exit 1
+          echo "  all SFTP secrets present"
+
+      - name: Upload
+        env:
+          HOST: ${{ secrets.HOSTINGER_SFTP_HOST }}
+          PORT: ${{ secrets.HOSTINGER_SFTP_PORT }}
+          USER: ${{ secrets.HOSTINGER_SFTP_USER }}
+          PASS: ${{ secrets.HOSTINGER_SFTP_PASSWORD }}
+          DIR: ${{ secrets.HOSTINGER_SFTP_DIR }}
+        run: |
+          set -euo pipefail
+          # --mirror: make the remote exactly match the archive. Without it, files
+          # deleted from the build survive on the server and can shadow new ones.
+          # -O2 batches transfers to reduce round-trips; --timeout avoids hanging.
+          lftp -c "
+            set cmd:fail-exit yes;
+            set net:timeout 60;
+            set net:max-retries 3;
+            set net:reconnect-interval-base 5;
+            open -u \"$USER\",\"$PASS\" -p \"$PORT\" \"$HOST\";
+            mirror -R --delete --verbose --parallel=4 /github/workspace/export.tar.gz $DIR;
+          "
+
+      - name: Clear server cache
+        # A cached edge will keep serving the previous build. Without this the
+        # deploy looks like it silently did nothing.
+        env:
+          PASS: ${{ secrets.HOSTINGER_SFTP_PASSWORD }}
+        run: |
+          set -e
+          # Best-effort LiteSpeed cache clear over HTTP, if reachable and enabled.
+          # Non-fatal: some hosts block it, and the deploy itself has succeeded.
+          curl -sS --max-time 20 -o /dev/null -w '%{http_code}\n' \
+            -u "cache:$PASS" \
+            "https://dental-clinic.cromstelit.com/.well-known/litespeed-purge" \
+            || echo "  cache clear endpoint unreachable; CDN will expire on its own"
+
+      - name: Post-deploy smoke test
+        run: |
+          set -e
+          base="https://dental-clinic.cromstelit.com"
+          fail=0
+          check() {
+            code=$(curl -sS -o /dev/null -w '%{http_code}' --max-time 20 "$1?cb=$RANDOM")
+            echo "  $code  $1"
+            [ "$code" = "$2" ] || fail=1
+          }
+          # Bypass the CDN with a cache-buster so we test the origin, not the edge.
+          check "$base/" 200
+          check "$base/about/" 200
+          check "$base/dentists/" 200
+          check "$base/services/" 200
+          check "$base/faq/" 200
+          check "$base/contact/" 200
+          check "$base/invisalign/" 200
+          check "$base/sitemap.xml" 200
+          check "$base/robots.txt" 200
+          # RSC payload — the exact thing that broke soft navigation before.
+          check "$base/index.txt" 200
+          check "$base/about/index.txt" 200
+          exit $fail
+
+      - name: Verify AVIF MIME type
+        # The regression this whole workflow is shaped around. If .htaccess is
+        # missing, this returns text/plain and every <picture> falls back.
+        run: |
+          set -e
+          url="https://dental-clinic.cromstelit.com/images/doctors/ethan-800w.avif?cb=$RANDOM"
+          ct=$(curl -sS -o /dev/null -w '%{content_type}' --max-time 20 "$url")
+          echo "  Content-Type: $ct"
+          if [ "$ct" != "image/avif" ]; then
+            echo "::error::AVIF served as '$ct', expected 'image/avif' — the .htaccess is missing or broken"
+            exit 1
+          fi
+          echo "  AVIF MIME correct"
+
+      - name: Summary
+        if: always()
+        run: |
+          {
+            echo "### Deploy — ${{ inputs.reason }}"
+            echo
+            echo "- Triggered by: @${{ github.actor }}"
+            echo "- Commit: \`${{ github.sha }}\`"
+            echo "- Environment: production"
+          } >> "$GITHUB_STEP_SUMMARY"

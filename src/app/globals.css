@@ -1,0 +1,170 @@
+@import "tailwindcss";
+
+@theme {
+  --color-cream: #f5f0e6;
+  --color-paper: #faf6ed;
+  --color-charcoal: #1a1915;
+  --color-ink: #100f0c;
+  --color-lime: #d8ff3f;
+  --color-limedeep: #b7e618;
+  --color-limeleaf: #6a8a00;
+  --color-lavender: #c6bee8;
+  --color-lavdeep: #a79fd9;
+  --color-peach: #ffd9c2;
+  --color-mint: #d6eadf;
+  --color-butter: #f6e8ae;
+
+  --font-display: var(--font-clash), sans-serif;
+  --font-sans: var(--font-inter), system-ui, sans-serif;
+  /* Editorial serif pair. Instrument Serif carries the voice; Cormorant
+     Garamond sits behind it as a fallback face (it is latin-subset + only
+     loaded if Instrument Serif is unavailable, so it costs 0 bytes). */
+  --font-editorial: var(--font-instrument), var(--font-cormorant), Georgia, "Times New Roman", serif;
+  --font-editorial-alt: var(--font-cormorant), var(--font-instrument), Georgia, "Times New Roman", serif;
+
+  /* Light band of the two-tone focus ring (see :focus-visible below). */
+  --color-focus-halo: #ffffff;
+
+  --shadow-soft: 0 30px 80px -20px rgb(16 15 12 / 0.25);
+  --shadow-pop: 0 18px 50px -12px rgb(16 15 12 / 0.35);
+
+  --container-max: 1500px;
+}
+
+/*
+  Midnight & gold — the hero / dark-section palette. Declared `static` because a
+  plain `@theme` only emits a variable once something generates a utility that
+  references it, which would leave part of this documented set silently missing
+  from the stylesheet until first use.
+
+  Measured contrast ratios between these tones (WCAG 2.1):
+    ivory       on midnight   16.67:1        midnight on ivory        16.67:1
+    gold        on midnight    7.70:1        midnight on gold         7.70:1
+    gold-bright on midnight    9.61:1        midnight on gold-bright  9.61:1
+    gold-deep   on midnight    6.36:1        midnight on gold-deep    6.36:1
+    ivory       on midnight-deep 14.61:1
+    gold-ink    on cream       5.47:1        gold-ink on paper       5.76:1
+
+  Do NOT pair gold/gold-bright with ivory (2.16:1 / 1.73:1) and do not put
+  gold-family text on the cream or paper page body (2.07:1 / 2.18:1) — use
+  --color-gold-ink for gold that has to sit on the light background.
+*/
+@theme static {
+  --color-midnight: #0a1628;
+  --color-midnight-deep: #0e2240;
+  --color-gold: #c8a45c;
+  --color-gold-bright: #d8b978;
+  --color-gold-deep: #b89448;
+  --color-gold-ink: #7a5c1f;
+  --color-ivory: #f8f5f0;
+}
+
+@layer base {
+  * {
+    border-color: var(--color-charcoal);
+  }
+
+  html {
+    overscroll-behavior-y: none;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    html {
+      scroll-behavior: smooth;
+    }
+  }
+
+  body {
+    background: var(--color-cream);
+    color: var(--color-charcoal);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    overflow-x: hidden;
+  }
+
+  ::selection {
+    background: var(--color-lime);
+    color: var(--color-ink);
+  }
+
+  :focus-visible {
+    /* Two-tone indicator. No single colour clears 3:1 against both the cream
+       page and the midnight hero, so the ring is built from two bands: a light
+       halo filling the outline offset (16.7:1 on midnight) plus the ink
+       outline that sits against the page (16.9:1 on cream). Whichever band
+       touches the background always clears 3:1. */
+    outline: 2px solid var(--color-ink);
+    outline-offset: 3px;
+    box-shadow: 0 0 0 3px var(--color-focus-halo);
+  }
+
+  h1, h2, h3, h4 {
+    font-family: var(--font-display);
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    line-height: 0.98;
+    text-wrap: balance;
+  }
+}
+
+@layer utilities {
+  /* Tiled film grain. The turbulence is rasterised once into a 160px tile and
+     repeated, instead of filtering a viewport-sized <rect> on every frame —
+     same look, a fraction of the raster cost. */
+  .grain-overlay {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E");
+    background-repeat: repeat;
+    background-size: 160px 160px;
+  }
+
+  .text-outline {
+    color: transparent;
+    -webkit-text-stroke: 1.5px currentColor;
+  }
+
+  .aligner-ellipse {
+    border-radius: 50% 50% 45% 45% / 38% 38% 62% 62%;
+  }
+
+  .text-outline-thick {
+    color: transparent;
+    -webkit-text-stroke: 2.5px currentColor;
+  }
+
+  .mask-fade-y {
+    -webkit-mask-image: linear-gradient(to bottom, transparent, black 8%, black 92%, transparent);
+    mask-image: linear-gradient(to bottom, transparent, black 8%, black 92%, transparent);
+  }
+
+  .no-scrollbar {
+    scrollbar-width: none;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .container-custom {
+    width: 100%;
+    max-width: var(--container-max);
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .no-cursor {
+    cursor: none;
+  }
+  .no-cursor * {
+    cursor: none;
+  }
+  .no-cursor *:focus-visible {
+    cursor: auto !important;
+  }
+  .no-cursor button,
+  .no-cursor a,
+  .no-cursor input,
+  .no-cursor select,
+  .no-cursor textarea {
+    cursor: default;
+  }
+}

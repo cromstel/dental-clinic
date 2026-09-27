@@ -1,0 +1,83 @@
+name: CodeQL
+
+# Static analysis for JavaScript/TypeScript.
+#
+# Complements ci.yml rather than duplicating it: CI catches what the compiler and
+# the export assertions catch, this catches what they cannot see — injection,
+# unsafe deserialization, path traversal, missing validation around the fetch /
+# mailto / asset paths.
+#
+# For a static marketing site the realistic finding surface is small, which is
+# exactly why it is worth running automatically: it is a check nobody would
+# otherwise remember to do.
+#
+# On push to main and weekly, so a newly published advisory is picked up even
+# when nobody has pushed anything.
+
+on:
+  push:
+    branches: [main]
+  schedule:
+    # Weekly, Monday 04:00 UTC. A schedule (not just push) is what makes this
+    # respond to *newly published* advisories rather than only to code changes.
+    - cron: '0 4 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Never let two CodeQL analyses write to the same category concurrently.
+concurrency:
+  group: codeql-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  analyze:
+    name: Analyze
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      # Required for the security-results API. Kept to this one job.
+      security-events: write
+
+    strategy:
+      fail-fast: false
+      matrix:
+        language: [javascript-typescript]
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      # CodeQL needs the dependency tree to resolve imports accurately.
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          language: ${{ matrix.language }}
+          # security-extended adds taint tracking for the query families most
+          # likely to matter in a web-facing project.
+          queries: security-extended
+
+      - name: Perform CodeQL analysis
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: '/language:${{ matrix.language }}'
+          # Do not fail the build on a finding. Results land in the Security tab
+          # and Dependabot covers dependency risk; a hard failure here on an
+          # un-triaged query result would just be a red X nobody acts on.
+          # Flip to `true` once the baseline is clean and you want enforcement.
+          fail-on-error: false
+
+      - name: Upload results
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: results.sarif
+          category: codeql-${{ matrix.language }}

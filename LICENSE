@@ -1,0 +1,111 @@
+﻿PROPRIETARY SOFTWARE LICENSE
+CITGROUP Dental Studio — All Rights Reserved
+
+Copyright (c) 2026 CITGROUP Dental Studio. All rights reserved.
+
+SPDX-License-Identifier: UNLICENSED
+
+---
+
+NOTICE
+
+This website and its source code are the proprietary property of CITGROUP
+Dental Studio. No rights are granted to any person other than the copyright
+holder. This is not an open-source project and no open-source license applies.
+
+The source code in this repository was created for and is owned by CITGROUP
+Dental Studio. It is published solely so that the live website at
+https://dental-clinic.cromstelit.com can be built, reviewed, and maintained by
+authorized parties.
+
+WHAT IS NOT PERMITTED
+
+Without the prior written permission of the copyright holder, you may NOT:
+
+  - Copy, reproduce, or republish this source code, in whole or in part.
+  - Modify, adapt, translate, or create derivative works from this code.
+  - Distribute, sublicense, sell, lease, rent, or otherwise transfer this code.
+  - Publish or make this code, or any portion of it, publicly available.
+  - Use this code, or any portion of it, to build a competing product, website,
+    or service.
+  - Remove or obscure the copyright notice, this license, or any other
+    proprietary marking from this code or from the deployed website.
+  - Present the deployed website, or its design, content, copy, photography, or
+    branding, as your own work.
+
+WHAT IS PERMITTED
+
+  - Viewing this code within CITGROUP Dental Studio and its authorized
+    contractors.
+  - Running it locally for development, review, or maintenance of the live site.
+  - Building and deploying it to CITGROUP Dental Studio's own infrastructure.
+
+THIRD-PARTY CODE
+
+This project depends on third-party open-source packages, which remain
+governed by their own licenses as recorded in `package-lock.json`. Those
+licenses are unaffected by this notice.
+
+PATIENT DATA AND PRIVACY
+
+This project processes personal data on behalf of a dental practice and must be
+assessed against applicable privacy law (including GDPR where it applies) before
+any change to data collection or handling. Three constraints follow from the
+current implementation and are part of the terms of use for this code:
+
+  1. The appointment enquiry form (src/components/sections/contact/
+     ContactForm.tsx) does not transmit data to any server. It composes a
+     message in the visitor's own mail client via a `mailto:` link. No personal
+     data is received, stored, logged, or processed by the site operator as a
+     consequence of using it. Any change that introduces server-side
+     transmission, storage, or logging of enquiry data alters the privacy
+     posture materially and requires a documented lawful basis.
+  2. The site sets no cookies, and uses no analytics, tag managers, session
+     storage, or third-party tracking scripts. This is load-bearing: the absence
+     of non-essential cookies is what allows the site to serve without a cookie
+     consent banner. Introducing any analytics or tag-manager SDK requires a
+     consent mechanism, a privacy policy, and an update to this section.
+  3. Published reviews carry only a first name and a neighbourhood
+     (src/content/site.ts). This is deliberately reduced detail and must not be
+     expanded to surnames, full addresses, dates of treatment, or any other
+     attribute that would make a patient identifiable — a dental practice's
+     readership makes such combinations identifying in a small locality.
+
+Real patient photography, clinical before/after imagery, and case detail must
+only be published with documented written patient consent, held on file and
+revisitable, specifying the scope of use. The images currently in
+public/images/ are generated placeholders and are not real patient records.
+
+TRADEMARKS
+
+"CITGROUP", "CITGROUP Dental Studio", and associated branding, logos, and site
+content are trademarks of CITGROUP Dental Studio and may not be used without
+permission.
+
+PERMISSION AND LICENSING ENQUIRIES
+
+To request permission to use, copy, or license this code — for example, to
+reuse the design system, components, or animations in another project — contact
+CITGROUP Dental Studio:
+
+  Email:  hello@citgroupdental.com
+  Web:    https://dental-clinic.cromstelit.com
+  Postal: 142 West 21st Street, New York, NY 10011, United States
+
+Any permission granted will be in writing and will state its own terms. No
+verbal or implied permission exists.
+
+---
+
+[OWNER NOTE — OPTIONAL, REMOVE OR COMPLETE BEFORE PUBLISHING THIS FILE]
+The copyright line above uses the trading name "CITGROUP Dental Studio" as
+recorded in `src/content/site.ts` (`site.fullName`). If the registered legal
+entity differs (for example, "... LLC" or a named professional corporation),
+replace the owner name in the copyright line with that exact legal name. No
+legal entity name was invented here.
+
+The contact email above is the site's general inbox. Confirm it is the right
+route for licensing and privacy enquiries, or substitute a dedicated address
+before this file is relied upon externally. The postal address and the phone
+number in `src/content/site.ts` are self-declared placeholders, so the phone is
+deliberately omitted above.

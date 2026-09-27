@@ -1,0 +1,38 @@
+{
+  "name": "citgroup-dental-studio",
+  "version": "1.0.0",
+  "private": true,
+  "license": "UNLICENSED",
+  "scripts": {
+    "dev": "next dev -p 5711",
+    "build": "next build && node scripts/rsc-payload-fix.mjs && node scripts/stage-server-config.mjs && node scripts/verify-export.mjs",
+    "build:next": "next build",
+    "start": "next start -p 5711",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit"
+  },
+  "browserslist": [
+    "chrome >= 110",
+    "edge >= 110",
+    "firefox >= 108",
+    "safari >= 15.4"
+  ],
+  "dependencies": {
+    "lucide-react": "^1.47.0",
+    "motion": "^13.4.2",
+    "next": "^16.3.6",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@tailwindcss/postcss": "^4.1.0",
+    "@types/node": "^26.6.2",
+    "@types/react": "^19.1.0",
+    "@types/react-dom": "^19.1.0",
+    "eslint": "^10.11.0",
+    "eslint-config-next": "^16.3.6",
+    "tailwindcss": "^4.1.0",
+    "typescript": "^7.0.2"
+  }
+}
