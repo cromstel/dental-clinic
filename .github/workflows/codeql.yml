@@ -17,6 +17,8 @@ name: CodeQL
 on:
   push:
     branches: [main]
+  pull_request:
+    branches: [main]
   schedule:
     # Weekly, Monday 04:00 UTC. A schedule (not just push) is what makes this
     # respond to *newly published* advisories rather than only to code changes.
