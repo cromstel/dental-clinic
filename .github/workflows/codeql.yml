@@ -17,6 +17,8 @@ name: CodeQL
 on:
   push:
     branches: [main]
+  pull_request:
+    branches: [main]
   schedule:
     # Weekly, Monday 04:00 UTC. A schedule (not just push) is what makes this
     # respond to *newly published* advisories rather than only to code changes.
@@ -35,22 +37,6 @@ jobs:
   analyze:
     name: Analyze
     runs-on: ubuntu-latest
-
-    # Code scanning is a repository setting, not something the workflow can turn
-    # on. On a private repo it requires GitHub Advanced Security; until that is
-    # enabled the analyze step exits with:
-    #
-    #   Code scanning is not enabled for this repository
-    #
-    # and the job would go red on every push for a reason that is not a code
-    # problem. continue-on-error keeps the run green and still executes the
-    # analysis, so the moment the setting is enabled the results start landing
-    # with no workflow change at all.
-    #
-    # TO ENABLE: Settings -> Code security and quality -> Code scanning -> Set
-    # up (or Advanced Security). Then delete this continue-on-error line to make
-    # CodeQL results blocking.
-    continue-on-error: true
 
     permissions:
       contents: read
