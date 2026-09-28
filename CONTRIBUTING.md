@@ -15,6 +15,8 @@ gh pr create --fill
 
 Required checks on `main`: **Lint, Typecheck, Build static export, Dependency audit, Workflow sanity**. All five must pass, plus **1 approving review** with stale reviews dismissed on push. Protection is enforced on admins, so a maintainer cannot merge their own PR unreviewed. Linear history only — no merge commits.
 
+Signed commits are not yet required. If you are asked to enable them, see the "What is not protected" section of `SECURITY.md` for why, and configure signing before doing so — otherwise your own pushes will be rejected.
+
 `nvm use` first — Node is pinned in `.nvmrc`.
 
 ## Commit style

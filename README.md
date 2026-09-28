@@ -164,6 +164,7 @@ Node version is pinned in `.nvmrc` (currently 22). Use it locally too (`nvm use`
 - **Required pull request review:** 1 approving review, stale reviews dismissed on push, last-push approval required
 - **Enforced on admins** — a maintainer cannot bypass it
 - **Linear history**, no force-push, no branch deletion, review threads must be resolved
+- **Signed commits not yet required** — the control exists in branch protection but is off until every contributor has signing configured. See `SECURITY.md`.
 
 Direct pushes to `main` are rejected. Branch → PR is the only path — see `CONTRIBUTING.md`.
 

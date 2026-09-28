@@ -69,4 +69,9 @@ The audit job is a separate concern from supply chain: `npm ci` installs from th
 
 **The `production` environment has no required reviewers.** Anyone with write access can approve and trigger a deploy. For a single-maintainer repository that is the intent, not an oversight; if a second maintainer is added, add a required reviewer to the environment at that point.
 
-**A compromised maintainer account can still push through.** Branch protection requires a review, but there is no 2FA enforcement or signed-commit requirement. Both are account-level settings, not repository settings, and must be configured on the user or org.
+**A compromised maintainer account can still push through.** Branch protection requires a review, but nothing verifies *who* made the commits. Two separate controls close this:
+
+- **Signed commits** — *Require signed commits* in branch protection (or a `required_signatures` rule in a ruleset). This rejects unsigned commits at the branch, so a stolen token alone is not enough. It is currently off, because enforcing it would lock out every contributor who has not configured commit signing.
+- **Two-factor authentication** — enforced per account or at the organisation level, not per repository. A maintainer with 2FA enabled cannot be phished into handing over a working token.
+
+Turning signed commits on is the stronger control and costs nothing once every contributor signs. Add a second maintainer, or decide the trade is worth making, and enable it.
