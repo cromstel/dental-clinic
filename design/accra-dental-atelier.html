@@ -218,6 +218,10 @@
     margin-top: 0.3rem;
   }
 
+  /* Below 900px the inline nav is hidden and a disclosure takes over, so every
+     destination stays reachable. Hiding the nav with no replacement — the
+     earlier version of this file — left mobile and keyboard users with only
+     the single CTA link. */
   .nav { display: flex; align-items: center; gap: clamp(1rem, 2.4vw, 2.4rem); }
   .nav a {
     text-decoration: none;
@@ -241,8 +245,78 @@
   }
   .nav a:hover { color: var(--bone); }
   .nav a:hover::after { transform: scaleX(1); transform-origin: left; }
-
   @media (max-width: 900px) { .nav { display: none; } }
+
+  .nav-toggle {
+    display: none;
+    align-items: center;
+    gap: 0.55rem;
+    padding: 0.6rem 1rem;
+    background: transparent;
+    border: 1px solid color-mix(in oklab, var(--bone) 30%, transparent);
+    border-radius: 999px;
+    color: var(--bone);
+    font-family: var(--font-body);
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    cursor: pointer;
+  }
+  .nav-toggle:hover { border-color: var(--ochre); color: var(--ochre); }
+  .nav-toggle__bars { display: grid; gap: 3px; width: 14px; }
+  .nav-toggle__bars span {
+    display: block;
+    height: 1.5px;
+    background: currentColor;
+    transition: transform 0.4s var(--ease-out), opacity 0.3s var(--ease-out);
+  }
+  .nav-toggle[aria-expanded="true"] .nav-toggle__bars span:nth-child(1) { transform: translateY(4.5px) rotate(45deg); }
+  .nav-toggle[aria-expanded="true"] .nav-toggle__bars span:nth-child(2) { opacity: 0; }
+  .nav-toggle[aria-expanded="true"] .nav-toggle__bars span:nth-child(3) { transform: translateY(-4.5px) rotate(-45deg); }
+  @media (max-width: 900px) { .nav-toggle { display: inline-flex; } }
+
+  .nav-sheet {
+    position: fixed;
+    inset: 0;
+    z-index: 99;
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 6rem var(--gutter) 3rem;
+    background: var(--cocoa-soft);
+  }
+  .nav-sheet[data-open="true"] { display: flex; }
+  .nav-sheet a {
+    font-family: var(--font-display);
+    font-size: clamp(2.25rem, 1.5rem + 5vw, 3.75rem);
+    line-height: 1.08;
+    text-decoration: none;
+    padding-block: 0.4rem;
+    border-bottom: 1px solid color-mix(in oklab, var(--bone) 12%, transparent);
+  }
+  .nav-sheet a:hover { color: var(--ochre); }
+  .nav-sheet__close {
+    position: absolute;
+    top: 1.1rem;
+    right: var(--gutter);
+    width: 2.75rem; height: 2.75rem;
+    display: grid; place-items: center;
+    border: 1px solid color-mix(in oklab, var(--bone) 30%, transparent);
+    border-radius: 50%;
+    background: transparent;
+    color: var(--bone);
+    font-size: 1.25rem;
+    cursor: pointer;
+  }
+  .nav-sheet__close:hover { border-color: var(--ochre); color: var(--ochre); }
+  .nav-sheet__meta {
+    margin-top: 2rem;
+    font-size: 0.8125rem;
+    color: var(--bone-dim);
+    line-height: 1.6;
+  }
 
   /* ── Buttons ─────────────────────────────────────────────────────────── */
   .btn {
@@ -607,13 +681,23 @@
   .index__sign::after  { width: 1px; height: 0.85rem; }
 
   /* Height is animated via grid-template-rows 0fr -> 1fr, which works
-     without a hard-coded max-height and so survives any content length. */
+     without a hard-coded max-height and so survives any content length.
+     `visibility: hidden` when closed is load-bearing, not cosmetic:
+     0fr + overflow:hidden collapses the box but leaves the text in the
+     accessibility tree, so a screen reader reads every collapsed panel.
+     visibility removes it from both the visual and accessibility trees while
+     still allowing the transition. */
   .index__panel {
     display: grid;
     grid-template-rows: 0fr;
-    transition: grid-template-rows 0.6s var(--ease-out);
+    visibility: hidden;
+    transition: grid-template-rows 0.6s var(--ease-out), visibility 0s linear 0.6s;
   }
-  .index__panel[data-open="true"] { grid-template-rows: 1fr; }
+  .index__panel[data-open="true"] {
+    grid-template-rows: 1fr;
+    visibility: visible;
+    transition: grid-template-rows 0.6s var(--ease-out), visibility 0s;
+  }
   .index__panel > div { overflow: hidden; }
   .index__panel-inner {
     padding: 0 0 clamp(1.5rem, 3vw, 2.4rem) calc(3.5rem + clamp(0.75rem, 2vw, 2rem));
@@ -872,8 +956,33 @@
       Request a consultation
       <span class="btn__arrow" aria-hidden="true">↗</span>
     </a>
+
+    <button
+      class="nav-toggle"
+      type="button"
+      aria-expanded="false"
+      aria-controls="nav-sheet"
+      data-nav-toggle
+    >
+      <span class="nav-toggle__bars" aria-hidden="true"><span></span><span></span><span></span></span>
+      Menu
+    </button>
   </div>
 </header>
+
+<!-- Mobile navigation. Present in the DOM at all widths so it is reachable by
+     keyboard, but only displayed under 900px by the media query. -->
+<div class="nav-sheet" id="nav-sheet" data-open="false" data-nav-sheet>
+  <button class="nav-sheet__close" type="button" data-nav-close aria-label="Close menu">&times;</button>
+  <a href="#services" data-nav-link>Treatments</a>
+  <a href="#approach" data-nav-link>Approach</a>
+  <a href="#studio" data-nav-link>The studio</a>
+  <a href="#visit" data-nav-link>Visit</a>
+  <p class="nav-sheet__meta">
+    14 Nii Bonne Street, Osu · Accra<br />
+    Mon–Fri 08:00–17:00 · Tue &amp; Thu until 20:00
+  </p>
+</div>
 
 <main id="main">
 
@@ -1407,6 +1516,45 @@
     };
     window.addEventListener("scroll", onScroll, { passive: true });
     onScroll();
+
+    /* ── Mobile nav disclosure ──────────────────────────────────────────
+       Below 900px the inline nav is display:none, so this takes over. Focus is
+       moved into the sheet on open and returned to the toggle on close, and
+       Escape closes it, so the disclosure is not a keyboard trap. */
+    const navToggle = document.querySelector("[data-nav-toggle]");
+    const navSheet = document.querySelector("[data-nav-sheet]");
+    if (navToggle && navSheet) {
+      const setNav = (open) => {
+        navToggle.setAttribute("aria-expanded", String(open));
+        navSheet.dataset.open = String(open);
+        document.documentElement.style.overflow = open ? "hidden" : "";
+        if (open) {
+          const first = navSheet.querySelector("a");
+          if (first) first.focus();
+        } else {
+          navToggle.focus();
+        }
+      };
+      navToggle.addEventListener("click", () =>
+        setNav(navToggle.getAttribute("aria-expanded") !== "true")
+      );
+      const closeBtn = navSheet.querySelector("[data-nav-close]");
+      if (closeBtn) closeBtn.addEventListener("click", () => setNav(false));
+      navSheet.querySelectorAll("[data-nav-link]").forEach((a) =>
+        a.addEventListener("click", () => setNav(false))
+      );
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape" && navSheet.dataset.open === "true") setNav(false);
+      });
+      // Leaving the mobile breakpoint must not strand an open sheet.
+      window.matchMedia("(min-width: 901px)").addEventListener("change", (e) => {
+        if (e.matches && navSheet.dataset.open === "true") {
+          navSheet.dataset.open = "false";
+          navToggle.setAttribute("aria-expanded", "false");
+          document.documentElement.style.overflow = "";
+        }
+      });
+    }
 
     /* ── Reveal on enter ────────────────────────────────────────────────
        One orchestrated entrance per element, staggered by DOM position so a

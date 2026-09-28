@@ -12,7 +12,7 @@
   the artifact is ever promoted from proposal to shipped page.
 */
 
-import { readFileSync, existsSync } from "node:fs";
+import { readFileSync, readdirSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -40,11 +40,18 @@ const checks = [
 ];
 for (const [label, ok] of checks) (ok ? note : fail)(`structure: ${label}`);
 
-/* ── 2. Heading order: never skip a level ─────────────────────────────── */
+/* ── 2. Heading order: first must be h1, then never skip a level ─────── */
 const headings = Array.from(html.matchAll(/<h([1-6])\b[^>]*>([\s\S]*?)<\/h\1>/gi)).map((m) => ({
   level: Number(m[1]),
   text: m[2].replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim().slice(0, 48),
 }));
+// The transition check alone has a hole: it starts prev at 0, so a document
+// whose FIRST heading is an h3 reports no jump. Assert the opening level too.
+if (!headings.length) {
+  fail("a11y: no headings found");
+} else if (headings[0].level !== 1) {
+  fail(`a11y: first heading is h${headings[0].level} ("${headings[0].text}"), expected h1`);
+}
 let prev = 0;
 for (const h of headings) {
   if (prev && h.level > prev + 1) {
@@ -52,7 +59,7 @@ for (const h of headings) {
   }
   prev = h.level;
 }
-note(`a11y: ${headings.length} headings, h1..h${headings[0]?.level ?? 0} sequence checked`);
+note(`a11y: ${headings.length} headings, first is h${headings[0]?.level ?? 0}, no level skipped`);
 
 /* ── 3. IDs unique, and every aria-controls / labelledby resolves ────── */
 const ids = Array.from(html.matchAll(/\sid="([^"]+)"/g)).map((m) => m[1]);
@@ -162,12 +169,40 @@ for (const [re, what] of banned) {
   else note(`aesthetic: no ${what}`);
 }
 
-/* ── 9. The artifact must not be reachable from the static export ──────── */
-for (const p of ["public", "src", "out"]) {
-  const target = join(here, "..", p, "accra-dental-atelier.html");
-  if (existsSync(target)) fail(`packaging: artifact is inside ${p}/ and would ship`);
+/* ── 9. The artifact must not be reachable from the static export ────────
+   Checked as a RECURSIVE search, not just at the root of each folder. A copy at
+   public/design/accra-dental-atelier.html passes a root-only check, but Next
+   copies all of public/ into out/ verbatim, so nested paths ship too. */
+function findUnder(dir, filename, depth = 0) {
+  if (depth > 6) return [];
+  let hits = [];
+  let entries;
+  try {
+    entries = readdirSync(dir, { withFileTypes: true });
+  } catch {
+    return [];
+  }
+  for (const e of entries) {
+    const full = join(dir, e.name);
+    if (e.isFile() && e.name === filename) hits.push(full);
+    else if (e.isDirectory() && e.name !== "node_modules") {
+      hits = hits.concat(findUnder(full, filename, depth + 1));
+    }
+  }
+  return hits;
 }
-note("packaging: artifact sits outside public/ and out/ so it cannot ship");
+
+let leaked = false;
+for (const p of ["public", "src", "out"]) {
+  const hits = findUnder(join(here, "..", p), "accra-dental-atelier.html");
+  if (hits.length) {
+    leaked = true;
+    hits.forEach((h) => fail(`packaging: artifact present at ${h} and would ship`));
+  }
+}
+if (!leaked) {
+  note("packaging: recursive search of public/, src/, out/ — artifact cannot ship");
+}
 
 /* ── Report ───────────────────────────────────────────────────────────── */
 console.log("verify-artifact — accra-dental-atelier.html\n");

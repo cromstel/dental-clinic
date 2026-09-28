@@ -70,8 +70,10 @@ jobs:
             echo "prerelease=false" >> "$GITHUB_OUTPUT"
           fi
 
-          # Fetch main so the ancestry check is meaningful.
-          git fetch origin main --depth=1 2>/dev/null || git fetch origin main
+          # Fetch main so the ancestry check is meaningful. The checkout above is
+          # already a full clone (fetch-depth: 0); a shallow fetch here could
+          # truncate that history and make --is-ancestor unreliable.
+          git fetch --no-tags origin main
 
           if ! git merge-base --is-ancestor "$TAG" origin/main; then
             echo "::error::$TAG is not on main. Release tags must point at a merged commit."
@@ -83,11 +85,10 @@ jobs:
           echo "  commit $sha"
           echo "  on main: yes"
 
-          if git rev-parse "v${TAG#v}" >/dev/null 2>&1; then
-            echo "::error::tag v${TAG#v} already exists"
-            exit 1
-          fi
-          echo "  not already released: yes"
+          # No "already released" tag check: the run is triggered BY the tag
+          # existing, so testing for the tag's existence is always true and
+          # always fails. If a release already exists for this tag, the
+          # publish step below is the thing that errors, and that is correct.
 
   build:
     name: Build and package

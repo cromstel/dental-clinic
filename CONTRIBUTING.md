@@ -17,6 +17,8 @@ Required checks on `main`: **Lint, Typecheck, Build static export, Dependency au
 
 Signed commits are not yet required. If you are asked to enable them, see the "What is not protected" section of `SECURITY.md` for why, and configure signing before doing so — otherwise your own pushes will be rejected.
 
+Worth knowing before it is enabled: GitHub lets you push unsigned commits to a **topic branch** even when the protected branch requires signatures. The rejection happens at merge time, not push time. So enabling it will not block your work immediately — it will block your PR from merging, which is the more confusing failure to debug.
+
 `nvm use` first — Node is pinned in `.nvmrc`.
 
 ## Commit style
