@@ -1,0 +1,19 @@
+# CITGROUP Dental Studio — Apache/LiteSpeed config for the static export.
+
+# 1. Correct MIME types for modern image formats.
+#    Without these, LiteSpeed serves .avif as text/plain, which makes browsers
+#    refuse to decode the images. This was the original regression.
+AddType image/avif .avif
+AddType image/webp .webp
+
+# 2. Immutable caching for the fingerprinted build output only.
+#    Files under /_next/static are content-hashed by Next.js, so they can be
+#    cached forever. Deliberately NOT extended to /images/*: those are authored
+#    filenames (e.g. /images/doctors/ethan-800w.avif) with no hash in them, so
+#    pinning them immutable would leave replaced photography cached for a year
+#    across every browser and CDN edge. The RSC payload .txt files are excluded
+#    for the same reason and must stay revalidatable, or clients keep fetching a
+#    stale flight payload after a deploy.
+<LocationMatch "^/_next/static/">
+  Header set Cache-Control "public, max-age=31536000, immutable"
+</LocationMatch>
