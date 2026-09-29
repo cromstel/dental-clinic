@@ -71,16 +71,16 @@ public/
   robots.txt              # Sitemap pointer — keep in sync with the routes above
   sitemap.xml             # 7 canonical URLs
   LICENSE                 # published alongside the site
+  .htaccess               # HOST CONFIG — copied into out/ by the build, ships in the archive
 deploy/                    # gitignored — generated deploy artifacts only
 scripts/
   rsc-payload-fix.mjs     # normalizes RSC prefetch filenames (see Scripts)
   stage-server-config.mjs # asserts out/.htaccess and its MIME rules
   verify-export.mjs       # fails the build if the export is not deployable
   simulate-ci.sh          # run the CI assertions locally
+  simulate-release-package.sh  # exercises the release tarball packaging locally
   download-and-convert-images.js  # one-off asset pipeline (Unsplash -> AVIF)
   generate-responsive-images.mjs
-config/
-  htaccess                # HOSTER CONFIG — source of truth, copied to out/.htaccess
 .github/
   workflows/              # ci, deploy, codeql
   dependabot.yml

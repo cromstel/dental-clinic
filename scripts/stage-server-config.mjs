@@ -43,14 +43,21 @@ if (!existsSync(staged)) {
 
 try {
   const text = readFileSync(staged, "utf8");
+  // Anchored to the start of a line, so a commented-out
+  // `# AddType image/avif .avif` does NOT satisfy the check. The previous
+  // `text.includes(needle)` form matched commented lines too, which meant the
+  // build could publish an export whose AVIF handling was entirely inert.
+  // `m` makes ^ and $ match per line; a trailing comment is not allowed so the
+  // directive stays unambiguous.
   const required = [
-    ["AddType image/avif .avif", "AVIF MIME type"],
-    ["AddType image/webp .webp", "WebP MIME type"],
+    [/^[ \t]*AddType[ \t]+image\/avif[ \t]+\.avif[ \t]*$/m, "AVIF MIME type"],
+    [/^[ \t]*AddType[ \t]+image\/webp[ \t]+\.webp[ \t]*$/m, "WebP MIME type"],
   ];
-  const missing = required.filter(([needle]) => !text.includes(needle));
+  const missing = required.filter(([directive]) => !directive.test(text));
   if (missing.length) {
-    console.error("stage-server-config: out/.htaccess is missing required directives:");
+    console.error("stage-server-config: out/.htaccess is missing active MIME directives:");
     for (const [, label] of missing) console.error(`  - ${label}`);
+    console.error("  (a commented-out line does not count; these must be live directives)");
     process.exit(1);
   }
 

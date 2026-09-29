@@ -61,7 +61,7 @@ The only secrets are the five `HOSTINGER_SFTP_*` values, used exclusively by `de
 
 No workflow uses a high-risk trigger. Specifically absent: `pull_request_target`, `workflow_run`, and `issue_comment` — all of which execute with repository credentials in ways a fork can influence. Every pull-request-triggered job here runs read-only.
 
-The audit job is a separate concern from supply chain: `npm ci` installs from the committed lockfile, and Dependabot is what moves that lockfile. A compromised dependency is caught by `npm audit` and CodeQL, not by these two settings.
+The audit job is a separate concern from supply chain: `npm ci` installs from the committed lockfile, and Dependabot is what moves that lockfile. `npm audit` reports known vulnerabilities and CodeQL reports findings matched by its configured queries; neither guarantees detection of every compromised dependency, and neither addresses a package that is malicious without being listed in an advisory.
 
 ## What is not protected
 
@@ -72,6 +72,6 @@ The audit job is a separate concern from supply chain: `npm ci` installs from th
 **A compromised maintainer account can still push through.** Branch protection requires a review, but nothing verifies *who* made the commits. Two separate controls close this:
 
 - **Signed commits** — *Require signed commits* in branch protection (or a `required_signatures` rule in a ruleset). This rejects unsigned commits at the branch, so a stolen token alone is not enough. It is currently off, because enforcing it would lock out every contributor who has not configured commit signing.
-- **Two-factor authentication** — enforced per account or at the organisation level, not per repository. A maintainer with 2FA enabled cannot be phished into handing over a working token.
+- **Two-factor authentication** — enforced per account or at the organisation level, not per repository. 2FA materially reduces password-only account takeover, but it does not prevent phishing of TOTP or SMS codes, and it does not revoke tokens that already exist. Phishing-resistant factors (hardware security keys, passkeys) and short-lived, narrowly scoped tokens are the stronger controls here.
 
 Turning signed commits on is the stronger control and costs nothing once every contributor signs. Add a second maintainer, or decide the trade is worth making, and enable it.
