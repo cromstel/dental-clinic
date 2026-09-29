@@ -13,7 +13,9 @@ git push -u origin <branch>
 gh pr create --fill
 ```
 
-Required checks on `main`: **Lint, Typecheck, Build static export, Dependency audit, Workflow sanity**. All five must pass, plus **1 approving review** with stale reviews dismissed on push. Protection is enforced on admins, so a maintainer cannot merge their own PR unreviewed. Linear history only — no merge commits.
+Required checks on `main`: **Lint, Typecheck, Build static export, Dependency audit, Workflow sanity**. All five must pass — no human approval is required, so a PR merges as soon as CI is green. Protection is enforced on admins and `strict` is on, so your branch must be up to date with `main` before it will merge. Linear history only, no merge commits: merge with squash.
+
+CodeRabbit posts a review on each PR. It is advisory, not blocking, so treat it as a second opinion rather than a gate — read it, but nothing waits on it.
 
 Signed commits are not yet required. If you are asked to enable them, see the "What is not protected" section of `SECURITY.md` for why, and configure signing before doing so — otherwise your own pushes will be rejected.
 
