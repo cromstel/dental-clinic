@@ -42,16 +42,18 @@ CodeQL reports **zero open alerts**. The previous two — `js/log-injection` in 
 
 ## Branch protection
 
-`main` carries full branch protection:
+`main` is protected by the automated gates:
 
-- **Required status checks:** Lint, Typecheck, Build static export, Dependency audit, Workflow sanity
-- **Required pull request review:** 1 approving review, with stale reviews dismissed on push and last-push approval required — a contributor cannot approve their own PR
+- **Required status checks:** Lint, Typecheck, Build static export, Dependency audit, Workflow sanity — all must pass, and `strict` is on, so a push must be up to date with `main` first
 - **Enforced on admins** — protection cannot be bypassed by a maintainer
 - **Required linear history** — no merge commits
-- **Conversation resolution required** — all review threads must be closed
 - **Branch deletion and force-pushes blocked**
 
-Direct pushes to `main` are rejected. Branch → PR is the only path.
+Direct pushes to `main` are rejected; branch → PR is the only path, and it merges once the five checks are green.
+
+**No human approval is required.** This was set deliberately: a single-maintainer repository cannot satisfy a one-approval rule, because the author is the only person who can approve, and GitHub blocks self-approval. The rule was therefore a permanent blocker rather than a control. Automated review still happens — CodeRabbit runs on every PR, and Dependabot opens security-fix PRs — but nothing *blocks* on it.
+
+What this trades away: a compromised maintainer token, or a mistaken push, reaches `main` once CI is green without a second pair of eyes. The five checks are the mitigation, and they do cover build breakage, type errors, lint, a broken static export, and known CVEs. They do not cover a subtle logic change or a malicious one. Re-enabling review when a second maintainer exists is the natural fix.
 
 ## Secrets
 

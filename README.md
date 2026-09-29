@@ -161,13 +161,13 @@ Node version is pinned in `.nvmrc` (currently 22). Use it locally too (`nvm use`
 `.github/workflows/codeql.yml` runs CodeQL on push to `main`, on every PR, weekly, and on manual dispatch, using the `security-extended` suite. Findings are **blocking** — `fail-on-error: true` semantics apply via the job, so a new alert fails the run and the results appear in the Security tab. Zero open alerts at time of writing.
 
 ### Branch protection
-`main` carries full branch protection:
+`main` is protected by the automated gates:
 
-- **Required status checks:** Lint, Typecheck, Build static export, Dependency audit, Workflow sanity
-- **Required pull request review:** 1 approving review, stale reviews dismissed on push, last-push approval required
+- **Required status checks:** Lint, Typecheck, Build static export, Dependency audit, Workflow sanity (with `strict`, so a branch must be up to date first)
 - **Enforced on admins** — a maintainer cannot bypass it
-- **Linear history**, no force-push, no branch deletion, review threads must be resolved
-- **Signed commits not yet required** — the control exists in branch protection but is off until every contributor has signing configured. See `SECURITY.md`.
+- **Linear history**, no force-push, no branch deletion
+- **No human approval required** — a PR merges once the five checks are green. A one-approval rule was removed because a solo maintainer cannot satisfy it: the author is the only possible approver, and GitHub blocks self-approval, so it blocked every PR indefinitely. CodeRabbit still reviews each PR; nothing blocks on it. See `SECURITY.md` for what this trades away.
+- **Signed commits not required** — the control exists in branch protection but is off until every contributor has signing configured.
 
 Direct pushes to `main` are rejected. Branch → PR is the only path — see `CONTRIBUTING.md`.
 
