@@ -1,0 +1,250 @@
+name: Release
+
+# Builds a release from a semver tag, attaches the verified static export as an
+# artifact, and publishes the GitHub release.
+#
+# Tag-triggered, not push-triggered, for the same reason deploy.yml is not: a
+# tag on `main` is a promise that this exact tree is what goes out, and the
+# release artifact should be the output of a build that ran the same gates CI
+# does — not a zip someone had lying around.
+#
+# USAGE
+#   git tag v1.2.0 && git push origin v1.2.0
+#
+# The tag must exist on `main`. Pre-release tags (v1.2.0-rc.1) publish as a
+# GitHub pre-release. The commit is verified to be an ancestor of `main` so a
+# tag on a side branch cannot publish.
+#
+# Releases are NOT auto-published to production. That is deploy.yml, which is
+# workflow_dispatch with an explicit DEPLOY confirmation, because it holds
+# credentials and the .htaccess is load-bearing.
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Existing tag to build a release from, e.g. v1.0.0"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref_name }}
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    name: Validate tag
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.check.outputs.version }}
+      prerelease: ${{ steps.check.outputs.prerelease }}
+      target: ${{ steps.check.outputs.target }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          # Full history: the ancestry check below needs the graph, and a
+          # shallow clone would make it silently pass or fail.
+          fetch-depth: 0
+
+      - name: Validate the tag
+        id: check
+        env:
+          TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}
+        run: |
+          set -euo pipefail
+          if ! [[ "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]]; then
+            echo "::error::'$TAG' is not a semver tag (expected vMAJOR.MINOR.PATCH[-PRERELEASE])"
+            exit 1
+          fi
+          echo "version=$TAG" >> "$GITHUB_OUTPUT"
+
+          if [[ "$TAG" == *-* ]]; then
+            echo "prerelease=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "prerelease=false" >> "$GITHUB_OUTPUT"
+          fi
+
+          # Fetch main so the ancestry check is meaningful. The checkout above is
+          # already a full clone (fetch-depth: 0); a shallow fetch here could
+          # truncate that history and make --is-ancestor unreliable.
+          git fetch --no-tags origin main
+
+          if ! git merge-base --is-ancestor "$TAG" origin/main; then
+            echo "::error::$TAG is not on main. Release tags must point at a merged commit."
+            exit 1
+          fi
+          sha=$(git rev-parse "$TAG")
+          echo "target=$sha" >> "$GITHUB_OUTPUT"
+          echo "  tag    $TAG"
+          echo "  commit $sha"
+          echo "  on main: yes"
+
+          # No "already released" tag check: the run is triggered BY the tag
+          # existing, so testing for the tag's existence is always true and
+          # always fails. If a release already exists for this tag, the
+          # publish step below is the thing that errors, and that is correct.
+
+  build:
+    name: Build and package
+    needs: validate
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ needs.validate.outputs.target }}
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      # Runs scripts/verify-export.mjs, so an incomplete export can never be
+      # attached to a release.
+      - name: Build
+        run: npm run build
+
+      - name: Package the static export
+        run: |
+          set -euo pipefail
+          archive="dental-clinic-${{ needs.validate.outputs.version }}.tar.gz"
+          tar -czf "$archive" -C out .
+          # A release without the .htaccess inside it is a trap for whoever
+          # unpacks it, so assert it before uploading.
+          #
+          # The listing is consumed in full rather than piped to `grep -q`. With
+          # `set -o pipefail`, `grep -q` exits on first match while `tar` is
+          # still writing, and tar then dies of SIGPIPE — failing the step even
+          # though the file is present. The pattern is anchored so it cannot
+          # match a nested .htaccess from some other path.
+          listing=$(tar -tzf "$archive")
+          if ! printf '%s\n' "$listing" | grep -x './\.htaccess' > /dev/null; then
+            echo "::error::.htaccess missing from the release archive"
+            exit 1
+          fi
+          echo "  archive: $(du -h "$archive" | cut -f1)"
+          echo "  files:   $(printf '%s\n' "$listing" | wc -l)"
+
+      - name: Package the design artifact separately
+        run: |
+          set -euo pipefail
+          if [ -d design ]; then
+            tar -czf design-artifact.tar.gz design
+            echo "  design artifact included"
+          else
+            echo "  no design/ directory; skipping"
+          fi
+
+      - name: Upload release artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-assets
+          path: |
+            dental-clinic-${{ needs.validate.outputs.version }}.tar.gz
+            design-artifact.tar.gz
+          retention-days: 90
+          if-no-files-found: error
+
+  publish:
+    name: Publish release
+    needs: [validate, build]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ needs.validate.outputs.target }}
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: release-assets
+
+      # The release body is the matching CHANGELOG section. A missing section
+      # is a hard failure rather than an empty release — an unreleased changelog
+      # entry is the signal that something was forgotten.
+      - name: Extract the changelog section for this version
+        id: notes
+        env:
+          VERSION: ${{ needs.validate.outputs.version }}
+        run: |
+          set -euo pipefail
+          if [ ! -f CHANGELOG.md ]; then
+            echo "::error::CHANGELOG.md not found; cannot generate release notes"
+            exit 1
+          fi
+          python - "$VERSION" <<'PY' >> "$GITHUB_OUTPUT"
+          import re, sys
+          version = sys.argv[1]
+          text = open("CHANGELOG.md", encoding="utf-8").read()
+          # Match the heading for this version, then stop at the next heading.
+          pattern = re.compile(
+              r"^##\s+\[" + re.escape(version) + r"\][^\n]*\n(.*?)(?=^##\s|\Z)",
+              re.MULTILINE | re.DOTALL,
+          )
+          m = pattern.search(text)
+          if not m:
+              sys.exit(f"no '## [{version}]' section in CHANGELOG.md")
+          body = m.group(1).strip()
+          if not body:
+              sys.exit(f"'## [{version}]' section is empty")
+          # Strip the trailing link-reference block; the release body does not
+          # need compare links.
+          body = re.sub(r"\n*\[.*?\]:\s*https?://\S+.*$", "", body, flags=re.MULTILINE).strip()
+          print(f"body<<GITHUB_OUTPUT_EOF")
+          print(body)
+          print("GITHUB_OUTPUT_EOF")
+          PY
+
+      - name: Create the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ needs.validate.outputs.version }}
+          PRERELEASE: ${{ needs.validate.outputs.prerelease }}
+          TARGET: ${{ needs.validate.outputs.target }}
+          NOTES: ${{ steps.notes.outputs.body }}
+        run: |
+          set -euo pipefail
+          # Assets are passed to `create` so they are attached BEFORE the
+          # release is published. The earlier version created the release first
+          # and uploaded second, which meant a missing design-artifact.tar.gz
+          # failed the step after the release already existed — leaving a
+          # published release with no assets, and making a re-run collide with it.
+          assets=("dental-clinic-$VERSION.tar.gz")
+          if [ -f design-artifact.tar.gz ]; then
+            assets+=("design-artifact.tar.gz")
+          else
+            echo "  no design/ artifact; releasing with the export only"
+          fi
+
+          args=(create "$VERSION" --title "$VERSION" --target "$TARGET" --notes "$NOTES")
+          if [ "$PRERELEASE" = "true" ]; then
+            args+=(--prerelease)
+          else
+            args+=(--latest)
+          fi
+          gh release "${args[@]}" "${assets[@]}"
+          echo "  published $VERSION with ${#assets[@]} asset(s): ${assets[*]}"
+
+      - name: Summary
+        if: always()
+        run: |
+          {
+            echo "### Release ${{ needs.validate.outputs.version }}"
+            echo
+            echo "- Commit: \`${{ needs.validate.outputs.target }}\`"
+            echo "- Pre-release: ${{ needs.validate.outputs.prerelease }}"
+            echo
+            echo "Publishing a release does **not** deploy. Run the **Deploy**"
+            echo "workflow from the Actions tab to publish to production."
+          } >> "$GITHUB_STEP_SUMMARY"

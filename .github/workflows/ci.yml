@@ -138,11 +138,11 @@ jobs:
       # Confirms the two files the whole pipeline depends on are actually
       # committed. Losing either silently disables real protection:
       #   .nvmrc          -> setup-node falls back to a version we never test on
-      #   config/htaccess -> build fails, or worse, ships without MIME rules
+      #   public/.htaccess -> build fails, or worse, ships without MIME rules
       - name: Assert critical build inputs are tracked
         run: |
           set -e
-          for f in .nvmrc config/htaccess public/robots.txt public/sitemap.xml; do
+          for f in .nvmrc public/.htaccess public/robots.txt public/sitemap.xml; do
             if [ ! -f "$f" ]; then
               echo "::error::required file missing: $f"
               exit 1

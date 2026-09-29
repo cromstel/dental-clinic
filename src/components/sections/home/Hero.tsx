@@ -164,19 +164,67 @@ export function Hero() {
         </motion.div>
       </motion.div>
 
-      {/* Scroll hint — gold line with a gentle pulse */}
-      <motion.div
-        {...enter({ y: 0 }, 1.6, 1.2)}
-        style={reduce ? undefined : { opacity: fade }}
-        className="absolute bottom-10 left-1/2 -translate-x-1/2"
-      >
-        <motion.span
-          className="block h-12 w-[1px] bg-gold/60"
-          animate={reduce ? undefined : { scaleY: [1, 0.3, 1], y: [0, 6, 0] }}
-          transition={{ duration: 2.2, repeat: Infinity, ease: "easeInOut" }}
-        />
-        <span className="sr-only">Scroll</span>
-      </motion.div>
+      {/* Scroll indicator — draw-on hairline + chevron head, with a vertical
+          editorial label. The line draws downward via stroke-dashoffset, the
+          chevron fades in and settles, then both retract for the loop.
+
+          Positioning and motion are split across two elements on purpose: the
+          outer div owns the -translate-x-1/2 centring, the inner one owns the
+          entrance transform. Motion writes an inline `transform` when it
+          animates `y`, which would otherwise clobber the Tailwind translate
+          and knock the indicator off-centre.
+
+          Under reduced motion the loop is dropped but the arrow stays drawn and
+          legible - the line renders at dashoffset 0 and the chevron at full
+          opacity, so it never depends on an animation having run to be seen. */}
+      <div className="pointer-events-none absolute bottom-10 left-1/2 -translate-x-1/2">
+        <motion.div
+          {...enter({ y: 0 }, 1.6, 1.2)}
+          style={reduce ? undefined : { opacity: fade }}
+          className="flex flex-col items-center gap-3"
+        >
+          <span className="font-editorial text-[0.6rem] uppercase tracking-[0.4em] text-gold/70 [writing-mode:vertical-rl]">
+            Scroll
+          </span>
+
+          <svg width="12" height="36" viewBox="0 0 10 36" fill="none" aria-hidden className="text-gold overflow-visible">
+            {/* Hairline. pathLength normalises the path to 1 so the dash maths
+                is unitless and independent of the rendered height. */}
+            <motion.path
+              d="M5 0.5V27"
+              stroke="currentColor"
+              strokeWidth="1"
+              strokeLinecap="round"
+              pathLength={1}
+              style={{ strokeDasharray: "1 1" }}
+              animate={reduce ? { strokeDashoffset: 0 } : { strokeDashoffset: [1, 0, 0, -1] }}
+              transition={
+                reduce
+                  ? { duration: 0 }
+                  : { duration: 2.4, times: [0, 0.45, 0.8, 1], ease: "easeInOut", repeat: Infinity }
+              }
+            />
+            {/* Chevron head — arrives once the line has drawn. */}
+            <motion.g
+              initial={{ opacity: 0, y: -5 }}
+              animate={reduce ? { opacity: 1, y: 0 } : { opacity: [0, 0, 1, 1, 0], y: [-5, -5, 0, 2, 4] }}
+              transition={
+                reduce
+                  ? { duration: 0 }
+                  : { duration: 2.4, times: [0, 0.45, 0.6, 0.85, 1], ease: "easeInOut", repeat: Infinity }
+              }
+            >
+              <path
+                d="M1.25 23.5 5 27.5 8.75 23.5"
+                stroke="currentColor"
+                strokeWidth="1"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </motion.g>
+          </svg>
+        </motion.div>
+      </div>
     </section>
   );
 }

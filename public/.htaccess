@@ -1,0 +1,61 @@
+# CITGROUP Dental Studio — Apache/LiteSpeed config for the static export.
+#
+# This file is both the source of truth AND the deployed artefact: it lives in
+# `public/`, so Next copies it into `out/` on every build and it travels inside
+# the deploy archive. An earlier version kept a copy in `config/` that
+# `scripts/stage-server-config.mjs` staged over the top of this one — two
+# sources of truth, where the staged copy silently overwrote the intended
+# policy. There is now exactly one file.
+#
+#   1. AddType for .avif / .webp — LOAD-BEARING. Without it LiteSpeed serves
+#      .avif as text/plain, browsers refuse to decode the image, and <picture>
+#      sources fall back or fail. Do not remove.
+#   2. Cache policy below. Note the deliberate exclusion of /images/* — see the
+#      comment on that block.
+
+AddType image/avif .avif
+AddType image/webp .webp
+
+# Never let a stale RSC payload, a 404, or a redeploy go unnoticed.
+<IfModule mod_headers.c>
+  # /_next/static is content-hash fingerprinted by Next.js, so a one-year
+  # immutable cache is safe. This uses <FilesMatch> rather than <LocationMatch>
+  # because <LocationMatch> is not permitted in .htaccess context — Apache
+  # rejects the whole config, not just the directive.
+  <FilesMatch "\.(js|css|woff2)$">
+    Header set Cache-Control "public, max-age=31536000, immutable"
+  </FilesMatch>
+
+  # HTML: revalidate on every request so a redeploy is picked up immediately.
+  <FilesMatch "\.html$">
+    Header set Cache-Control "public, max-age=0, must-revalidate"
+  </FilesMatch>
+
+  # RSC prefetch payloads, sitemap, robots: short TTL with stale-while-revalidate.
+  <FilesMatch "\.(txt|xml)$">
+    Header set Cache-Control "public, max-age=300, stale-while-revalidate=86400"
+  </FilesMatch>
+
+  # /images/* is deliberately NOT cached immutably. Those are authored
+  # filenames with no content hash (e.g. /images/doctors/ethan-800w.avif), so
+  # pinning them for a year would keep replaced photography cached across every
+  # browser and CDN edge. They fall through to the host's default, which is
+  # correct for a file that is replaced under the same name.
+  <FilesMatch "\.(avif|webp|jpg|jpeg|png|svg|ico)$">
+    Header set Cache-Control "public, max-age=604800, stale-while-revalidate=86400"
+  </FilesMatch>
+
+  # Security headers (conservative set — safe for a static site).
+  <IfModule mod_mime.c>
+    Header always set X-Content-Type-Options "nosniff"
+  </IfModule>
+  Header always set Referrer-Policy "strict-origin-when-cross-origin"
+</IfModule>
+
+# Force HTTPS. Hostinger provisions this itself; this is a no-op when the host
+# already redirects.
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteCond %{HTTPS} off
+  RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+</IfModule>

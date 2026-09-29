@@ -29,7 +29,7 @@ npm run lint       # eslint (build tooling only — see note)
 `next build` alone does not produce a deployable site. Three post-build steps run in sequence, and each one exists because its failure mode has shipped silently before:
 
 1. **`scripts/rsc-payload-fix.mjs`** — normalizes per-route RSC prefetch payload filenames. Next 16 writes `<route>/__next.<route>/__PAGE__.txt` (slash form) but the client router fetches `<route>/__next.<route>.__PAGE__.txt` (dot form). Unfixed, every cross-route prefetch 404s and soft navigation degrades to full page loads. No compiler error.
-2. **`scripts/stage-server-config.mjs`** — copies `config/htaccess` → `out/.htaccess`. The export cannot know about the host, and without this file Hostinger serves `.avif` as `text/plain`, which breaks every `<picture>` source. **Load-bearing — do not delete `config/htaccess`.**
+2. **`scripts/stage-server-config.mjs`** — asserts `out/.htaccess` exists and still carries its `AddType` rules. The file is copied from `public/.htaccess` by Next itself; there is no staging step and no second source of truth. Without it Hostinger serves `.avif` as `text/plain`, which breaks every `<picture>` source. **Load-bearing — do not delete `public/.htaccess`.**
 3. **`scripts/verify-export.mjs`** — fails the build if any route HTML, RSC payload, `robots.txt`, or `sitemap.xml` entry is missing, if stale payload directories remain, if `.htaccess` was not staged, or if source/deps leaked into `out/`. This is the gate that makes CI trustworthy.
 
 `scripts/simulate-ci.sh` runs the same assertions locally under Git Bash before you push.
@@ -71,16 +71,16 @@ public/
   robots.txt              # Sitemap pointer — keep in sync with the routes above
   sitemap.xml             # 7 canonical URLs
   LICENSE                 # published alongside the site
+  .htaccess               # HOST CONFIG — copied into out/ by the build, ships in the archive
 deploy/                    # gitignored — generated deploy artifacts only
 scripts/
   rsc-payload-fix.mjs     # normalizes RSC prefetch filenames (see Scripts)
-  stage-server-config.mjs # config/htaccess -> out/.htaccess
+  stage-server-config.mjs # asserts out/.htaccess and its MIME rules
   verify-export.mjs       # fails the build if the export is not deployable
   simulate-ci.sh          # run the CI assertions locally
+  simulate-release-package.sh  # exercises the release tarball packaging locally
   download-and-convert-images.js  # one-off asset pipeline (Unsplash -> AVIF)
   generate-responsive-images.mjs
-config/
-  htaccess                # HOSTER CONFIG — source of truth, copied to out/.htaccess
 .github/
   workflows/              # ci, deploy, codeql
   dependabot.yml
@@ -101,17 +101,20 @@ These are **not** production assets. Replace before launch.
 - The `CITGROUP` legal entity name in `LICENSE` uses the trading name from `site.ts`. Substitute the registered entity if one exists; see the owner note at the foot of `LICENSE`.
 
 ## Deployment
-`out/` is a complete, self-contained static site, including `.htaccess` (staged by the build) and `LICENSE`. Deploy the **contents** of `out/` to any static host. `trailingSlash: true` means the host must serve `about/index.html` at `/about/`.
+`out/` is a complete, self-contained static site, including `.htaccess` (copied by the build from `public/`) and `LICENSE`. Deploy the **contents** of `out/` to any static host. `trailingSlash: true` means the host must serve `about/index.html` at `/about/`.
 
-The `.htaccess` is Hostinger/LiteSpeed-specific and is the one file that is easy to lose in a partial upload. It is tracked at **`config/htaccess`** and the build copies it into `out/.htaccess`, so a plain `out/` upload includes it automatically. If AVIF images render broken or fall back to WebP, that file is missing from the server.
+The `.htaccess` is Hostinger/LiteSpeed-specific and is the one file that is easy to lose in a partial upload. It is tracked at **`public/.htaccess`**, and because it lives in `public/` Next copies it into `out/`, so a plain `out/` upload always includes it. If AVIF images render broken or fall back to WebP, that file is missing from the server.
 
 It matters because:
 
 - `AddType image/avif .avif` / `image/webp` are **load-bearing** — without them Hostinger serves `.avif` as `text/plain`, the AVIF `<picture>` sources fail to decode, and the browser falls back.
-- The one-year `immutable` cache covers `/_next/static/**` `.js`, `.css`, `.woff2` as well as images. Those filenames are content-hash fingerprinted, so they can never go stale.
+- The one-year `immutable` cache is scoped to `/_next/static/**` (`.js`, `.css`, `.woff2`). Those filenames are content-hash fingerprinted, so they can never go stale.
+- `/images/*` is **deliberately excluded** from that policy. Those are authored filenames with no content hash (`ethan-800w.avif`), so pinning them would keep replaced photography cached for a year. They get a 7-day TTL with `stale-while-revalidate` instead.
 - HTML is set to `max-age=0, must-revalidate`, and the RSC `.txt` payloads / sitemap / robots to a 5-minute `stale-while-revalidate` window, so a redeploy is picked up quickly while the CDN still absorbs repeat traffic.
 
-> If you ever find `config/htaccess` missing, do **not** recreate it from memory — it previously existed only in a local temp folder and was lost. `git log` has it.
+> Hostinger's `hcdn` CDN applies its own `immutable` policy to static assets at the edge, which overrides what `.htaccess` requests. After swapping an image under the same filename, purge the Hostinger cache or rename the file — otherwise the old image can be served for up to a year.
+
+> If you ever find `public/.htaccess` missing, do **not** recreate it from memory — it previously existed only in a local temp folder and was lost. `git log` has it.
 
 ### Manual deploy (FileZilla / any SFTP client)
 1. `npm run build`
@@ -119,7 +122,7 @@ It matters because:
 3. Expect this shape on the server:
    ```
    public_html/
-     .htaccess          <- staged by the build from config/htaccess
+     .htaccess          <- copied into out/ by the build from public/.htaccess
      index.html   404.html   favicon.svg   robots.txt   sitemap.xml
      LICENSE             <- published alongside the site
      _next/              <- compiled JS/CSS/fonts
@@ -149,7 +152,7 @@ Prefer an SFTP user scoped to the site directory over the primary account. The w
 After upload it runs a post-deploy smoke test — all seven routes, the RSC payloads, `robots.txt`, `sitemap.xml` — with cache-busters so the origin is tested rather than the CDN edge. It then asserts `/images/doctors/ethan-800w.avif` returns `Content-Type: image/avif`, which is the direct detector of a missing or broken `.htaccess`. Deploys run against a `production` environment and are serialised by a concurrency group, so two can never race.
 
 ## CI
-`.github/workflows/ci.yml` runs on every push and PR to `main`, as five parallel jobs: **lint**, **typecheck**, **build** (including `verify-export.mjs`), **audit**, and a **guards** job that asserts `.nvmrc`, `config/htaccess`, and the build-script wiring are actually committed.
+`.github/workflows/ci.yml` runs on every push and PR to `main`, as five parallel jobs: **lint**, **typecheck**, **build** (including `verify-export.mjs`), **audit**, and a **guards** job that asserts `.nvmrc`, `public/.htaccess`, and the build-script wiring are actually committed.
 
 Node version is pinned in `.nvmrc` (currently 22). Use it locally too (`nvm use`) so a build that passes CI does not fail on your machine. Next 16 requires Node >= 20.9.
 
@@ -158,16 +161,18 @@ Node version is pinned in `.nvmrc` (currently 22). Use it locally too (`nvm use`
 `.github/workflows/codeql.yml` runs CodeQL on push to `main`, on every PR, weekly, and on manual dispatch, using the `security-extended` suite. Findings are **blocking** — `fail-on-error: true` semantics apply via the job, so a new alert fails the run and the results appear in the Security tab. Zero open alerts at time of writing.
 
 ### Branch protection
-`main` is protected by a `ci-gate` ruleset:
+`main` carries full branch protection:
 
-- **Required status checks:** Lint, Typecheck, Build static export, Dependency audit, Workflow sanity — all must pass before a push or merge lands
-- **Branch deletion** blocked
-- **Force-push** blocked
+- **Required status checks:** Lint, Typecheck, Build static export, Dependency audit, Workflow sanity
+- **Required pull request review:** 1 approving review, stale reviews dismissed on push, last-push approval required
+- **Enforced on admins** — a maintainer cannot bypass it
+- **Linear history**, no force-push, no branch deletion, review threads must be resolved
+- **Signed commits not yet required** — the control exists in branch protection but is off until every contributor has signing configured. See `SECURITY.md`.
 
-In practice this means you cannot push straight to `main`: a direct push is rejected with `GH013` until the checks have run on that commit. Work on a branch and open a PR. That is the intended path, not a workaround.
+Direct pushes to `main` are rejected. Branch → PR is the only path — see `CONTRIBUTING.md`.
 
 ### Repository visibility
-The repository is **public**. `LICENSE` is proprietary/all-rights-reserved, but a licence asserts rights rather than enforcing them — the source is clonable. There is no patient data in the repo: images are generated placeholders, reviews are first-name-plus-neighbourhood, and the enquiry form is `mailto:` with no server. If visibility ever needs to change, the code scanning and ruleset behaviour differs between the two, so re-read this section after changing it.
+The repository is **public**, deliberately: branch protection and code scanning are plan-gated on private repositories. `LICENSE` is proprietary/all-rights-reserved, but a licence asserts rights rather than enforcing them, so the source is readable and clonable. There is no patient data in the repo. See `SECURITY.md` for the full threat model and what is not protected.
 
 ### Dependency updates
 `.github/dependabot.yml` opens PRs on three schedules: weekly grouped bumps for production and dev tooling, **daily ungrouped** security fixes, and weekly `github-actions` updates. Grouped PRs are never auto-merged — CI is the gate.
@@ -181,7 +186,7 @@ Major bumps for `typescript`, `next`, `react`, and `react-dom` are ignored on pu
 bash scripts/simulate-ci.sh
 ```
 
-It verifies `.nvmrc`, `config/htaccess`, `public/robots.txt` and `public/sitemap.xml` are present; that the three post-build scripts are wired into `npm run build`; that `out/` has at least 100 files; and that `.htaccess` ends up inside the deploy tarball. The equivalent of the full gate suite is `npm run lint && npm run typecheck && npm run build && npm audit --omit=dev --audit-level=high`.
+It verifies `.nvmrc`, `public/.htaccess`, `public/robots.txt` and `public/sitemap.xml` are present; that the three post-build scripts are wired into `npm run build`; that `out/` has at least 100 files; and that `.htaccess` ends up inside the deploy tarball. The equivalent of the full gate suite is `npm run lint && npm run typecheck && npm run build && npm audit --omit=dev --audit-level=high`.
 
 ## Accessibility
 Lighthouse 13.5.0 against a local `out/` (unthrottled desktop): **Accessibility 100, Best Practices 100, SEO 100 on all seven routes**, plus the 404 page at a11y 100 / BP 100. CLS 0.
