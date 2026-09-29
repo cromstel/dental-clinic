@@ -1631,7 +1631,14 @@
           const p = Math.min(1, Math.max(0, (vh * 0.9 - rect.top) / (rect.height + vh * 0.4)));
           paths.forEach((el, i) => {
             const local = Math.min(1, Math.max(0, (p - i * 0.08) / 0.72));
-            el.style.strokeDashoffset = String(el.__len ?? (el.__len = parseFloat(el.style.strokeDasharray)) * (1 - local));
+            // Cache the length on first use. The assignment MUST be
+            // parenthesised: `??` binds looser than `*`, so
+            // `a ?? (a = x) * y` parses as `a ?? ((a = x) * y)` — which resets
+            // the cache every frame and coerces a string.
+            if (el.__len === undefined) {
+              el.__len = parseFloat(el.style.strokeDasharray) || el.getTotalLength();
+            }
+            el.style.strokeDashoffset = String(el.__len * (1 - local));
           });
           archTick = false;
         });

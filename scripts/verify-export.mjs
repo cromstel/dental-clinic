@@ -98,9 +98,12 @@ for (const root4 of ["__next._tree.txt", "__next._index.txt", "__next.__PAGE__.t
   }
 }
 
-// 3. Server config staged (load-bearing: AVIF/WebP MIME + immutable caching)
+// 3. Server config staged (load-bearing: AVIF/WebP MIME + cache policy).
+//    The file is copied into out/ by Next from public/.htaccess — there is no
+//    staging step any more — so this only asserts presence; the MIME contents
+//    are checked by scripts/stage-server-config.mjs.
 if (!isFile(join(outDir, ".htaccess"))) {
-  fail("missing out/.htaccess — .avif would be served as text/plain (run scripts/stage-server-config.mjs)");
+  fail("missing out/.htaccess — .avif would be served as text/plain (public/.htaccess did not reach the export)");
 }
 
 // 4. SEO files present and consistent with the routed pages

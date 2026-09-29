@@ -13,7 +13,7 @@ The actual attack surface is:
 |---|---|---|
 | Static HTML/CSS/JS | The whole product | Served as files; no execution server-side |
 | `mailto:` enquiry form | The only form on the site | Composes in the visitor's own mail client. Nothing is transmitted to or stored on any server |
-| Host config | `config/htaccess` | LiteSpeed directives, fully tracked, reviewed in diffs |
+| Host config | `public/.htaccess` | LiteSpeed directives, shipped inside the deploy archive, reviewed in diffs |
 | Build pipeline | `npm ci` → `next build` | Runs in CI on ephemeral runners; no job triggered by a pull request has access to secrets |
 | Deploy | SFTP upload, `workflow_dispatch` only | The only job holding credentials |
 

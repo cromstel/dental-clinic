@@ -5,7 +5,7 @@ set -e
 cd /c/projects/dental-clinic 2>/dev/null || cd "$(dirname "$0")/.."
 
 echo "--- step: assert critical build inputs are tracked ---"
-for f in .nvmrc config/htaccess public/robots.txt public/sitemap.xml; do
+for f in .nvmrc public/.htaccess public/robots.txt public/sitemap.xml; do
   if [ ! -f "$f" ]; then
     echo "::error::required file missing: $f"
     exit 1
@@ -31,11 +31,16 @@ if [ "$count" -lt 100 ]; then
   exit 1
 fi
 
-echo "--- step: package export as a tarball (deploy job) ---"
+echo "--- step: package export as a tarball (release job) ---"
+# Mirrors release.yml: the listing is consumed in full rather than piped to
+# `grep -q`, which under `set -o pipefail` would exit early, SIGPIPE tar, and
+# fail the step even though the archive is fine.
 rm -f export.tar.gz
 tar -czf export.tar.gz -C out .
+listing=$(tar -tzf export.tar.gz)
 echo "  archive: $(du -h export.tar.gz | cut -f1)"
-if ! tar -tzf export.tar.gz | grep -q '^\./\.htaccess$'; then
+echo "  files:   $(printf '%s\n' "$listing" | wc -l)"
+if ! printf '%s\n' "$listing" | grep -x './\.htaccess' > /dev/null; then
   echo "::error::.htaccess missing from archive"
   exit 1
 fi

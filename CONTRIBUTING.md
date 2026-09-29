@@ -37,7 +37,7 @@ chore(actions): …     # Dependabot's prefix for action updates
 
 **Do not delete the `*.txt` files in `out/`.** They are RSC prefetch payloads, not debug output. The shipped router chunk fetches `<route>/index.txt` and `<route>/__next.<route>.__PAGE__.txt` for client-side navigation. Stripping them degrades every `<Link>` to a full page load. `deploy/README.md` and the build script both say this; `scripts/verify-export.mjs` now fails the build if they are missing.
 
-**Do not delete or relocate `config/htaccess`.** Without it Hostinger serves `.avif` as `text/plain`, the AVIF `<picture>` sources fail to decode, and the browser falls back to WebP. The build copies it to `out/.htaccess` and `verify-export.mjs` fails if that copy is absent. It lives in `config/` rather than `deploy/` because `deploy/` is gitignored.
+**Do not delete `public/.htaccess`.** Without it Hostinger serves `.avif` as `text/plain`, the AVIF `<picture>` sources fail to decode, and the browser falls back to WebP. It lives in `public/` so Next copies it into `out/`, which means it travels inside the deploy archive and cannot be lost to a partial upload. Both `stage-server-config.mjs` and `verify-export.mjs` fail the build if it is missing. There is only one copy — an earlier version also had a `config/htaccess` that the staging script copied over the top, and the two silently disagreed.
 
 **Adding a route means touching four places.** `src/app/<route>/page.tsx`, the `ROUTES` array in `scripts/verify-export.mjs`, `public/sitemap.xml`, and the sitemap list in `public/robots.txt` is unchanged but the sitemap must gain the URL. Miss the `ROUTES` entry and the build fails — that is intentional.
 

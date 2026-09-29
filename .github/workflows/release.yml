@@ -117,15 +117,23 @@ jobs:
       - name: Package the static export
         run: |
           set -euo pipefail
-          tar -czf dental-clinic-${{ needs.validate.outputs.version }}.tar.gz -C out .
+          archive="dental-clinic-${{ needs.validate.outputs.version }}.tar.gz"
+          tar -czf "$archive" -C out .
           # A release without the .htaccess inside it is a trap for whoever
           # unpacks it, so assert it before uploading.
-          if ! tar -tzf dental-clinic-${{ needs.validate.outputs.version }}.tar.gz | grep -q '^\./\.htaccess$'; then
+          #
+          # The listing is consumed in full rather than piped to `grep -q`. With
+          # `set -o pipefail`, `grep -q` exits on first match while `tar` is
+          # still writing, and tar then dies of SIGPIPE — failing the step even
+          # though the file is present. The pattern is anchored so it cannot
+          # match a nested .htaccess from some other path.
+          listing=$(tar -tzf "$archive")
+          if ! printf '%s\n' "$listing" | grep -x './\.htaccess' > /dev/null; then
             echo "::error::.htaccess missing from the release archive"
             exit 1
           fi
-          echo "  archive: $(du -h dental-clinic-${{ needs.validate.outputs.version }}.tar.gz | cut -f1)"
-          echo "  files:   $(tar -tzf dental-clinic-${{ needs.validate.outputs.version }}.tar.gz | wc -l)"
+          echo "  archive: $(du -h "$archive" | cut -f1)"
+          echo "  files:   $(printf '%s\n' "$listing" | wc -l)"
 
       - name: Package the design artifact separately
         run: |
@@ -207,18 +215,26 @@ jobs:
           NOTES: ${{ steps.notes.outputs.body }}
         run: |
           set -euo pipefail
+          # Assets are passed to `create` so they are attached BEFORE the
+          # release is published. The earlier version created the release first
+          # and uploaded second, which meant a missing design-artifact.tar.gz
+          # failed the step after the release already existed — leaving a
+          # published release with no assets, and making a re-run collide with it.
+          assets=("dental-clinic-$VERSION.tar.gz")
+          if [ -f design-artifact.tar.gz ]; then
+            assets+=("design-artifact.tar.gz")
+          else
+            echo "  no design/ artifact; releasing with the export only"
+          fi
+
           args=(create "$VERSION" --title "$VERSION" --target "$TARGET" --notes "$NOTES")
           if [ "$PRERELEASE" = "true" ]; then
             args+=(--prerelease)
           else
             args+=(--latest)
           fi
-          gh release "${args[@]}"
-          gh release upload "$VERSION" \
-            "dental-clinic-$VERSION.tar.gz" \
-            design-artifact.tar.gz \
-            --clobber
-          echo "  published $VERSION"
+          gh release "${args[@]}" "${assets[@]}"
+          echo "  published $VERSION with ${#assets[@]} asset(s): ${assets[*]}"
 
       - name: Summary
         if: always()

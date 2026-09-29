@@ -128,7 +128,9 @@ const ratio = (a, b) => {
 const pairs = [
   ["bone", "cocoa", 4.5, "body text on the cocoa surface"],
   ["bone-dim", "cocoa", 4.5, "secondary text on cocoa"],
-  ["bone-dim", "cocoa-card", 4.5, "secondary text on the raised card surface"],
+  // .section--card renders .creed__body (--bone-dim) on --cocoa-soft. The
+  // earlier entry tested --cocoa-card, which the stylesheet never references.
+  ["bone-dim", "cocoa-soft", 4.5, "creed body copy on the approach band"],
   ["ochre", "cocoa", 4.5, "eyebrows and figure numbers on cocoa"],
   ["ochre", "cocoa-soft", 4.5, "eyebrows on the approach band"],
   ["ink", "bone", 4.5, "type on the bone band"],
