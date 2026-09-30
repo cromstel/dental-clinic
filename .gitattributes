@@ -1,0 +1,20 @@
+# Line endings are part of the contract for anything a shell or a CI runner
+# executes, so they are pinned here rather than left to each developer's
+# core.autocrlf setting.
+#
+# Without this, a Windows checkout with core.autocrlf=true rewrites the shell
+# scripts to CRLF and they stop running: bash reports `set: -: invalid option`
+# on the first line and `$'\r': command not found` on every other. CI never
+# sees it, because ubuntu-latest checks out LF, so the scripts look fine in
+# every green build while being unusable for anyone cloning on Windows.
+
+*.sh text eol=lf
+
+# The CI entrypoints are parsed by GitHub's runner, not by a shell on the
+# contributor's machine, but keeping them LF means a local run of the same
+# commands sees the same bytes the runner will.
+.github/workflows/*.yml text eol=lf
+
+# Node scripts tolerate either ending, so they are left to the local setting.
+# This is deliberate: pinning them would rewrite every .mjs file in the working
+# tree for no functional gain.
