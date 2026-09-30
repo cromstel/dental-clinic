@@ -29,6 +29,12 @@ export const site = {
     tel: "+12125550184",
   },
   email: "hello@citgroupdental.com",
+  // The canonical production origin. Code reads this rather than repeating the
+  // host, so moving the site is a one-line change. The static copies in
+  // public/robots.txt and public/sitemap.xml cannot import it, so
+  // scripts/verify-hosts.mjs cross-checks them against this value at build
+  // time and fails the build if they drift.
+  url: "https://dental-clinic.cromstelit.com",
   mapsUrl:
     "https://www.google.com/maps/search/?api=1&query=CITGROUP+Dental+Studio+142+West+21st+Street+New+York+NY+10011",
 };

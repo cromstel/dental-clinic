@@ -155,9 +155,18 @@ jobs:
           set -e
           scripts=$(node -p "require('./package.json').scripts.build")
           echo "  build = $scripts"
-          for s in rsc-payload-fix stage-server-config verify-export; do
+          # Each of these fails the build on a failure mode that is otherwise
+          # silent: a broken export, a host mismatch between code and the static
+          # robots/sitemap, a .htaccess that lost its AVIF MIME rules.
+          for s in rsc-payload-fix stage-server-config verify-export verify-hosts; do
             case "$scripts" in
               *"$s"*) echo "  wired: $s" ;;
               *) echo "::error::build script not wired into npm run build: $s"; exit 1 ;;
             esac
           done
+
+      # The host check is cheap and reads only committed files, so it can also
+      # run before the slow build — a drifted origin should fail in seconds, not
+      # after a full static export.
+      - name: Check declared origin matches static files
+        run: node scripts/verify-hosts.mjs
