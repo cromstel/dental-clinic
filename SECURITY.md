@@ -15,7 +15,7 @@ The actual attack surface is:
 | `mailto:` enquiry form | The only form on the site | Composes in the visitor's own mail client. Nothing is transmitted to or stored on any server |
 | Host config | `public/.htaccess` | LiteSpeed directives, shipped inside the deploy archive, reviewed in diffs |
 | Build pipeline | `npm ci` → `next build` | Runs in CI on ephemeral runners; no job triggered by a pull request has access to secrets |
-| Deploy | SFTP upload, `workflow_dispatch` only | The only job holding credentials |
+| Deploy | Hostinger API archive upload, `workflow_dispatch` only | The only job holding a credential |
 
 There is **no authentication layer to bypass** because there are no accounts. There is **no cookie** because there is nothing to track — see the privacy constraints below.
 
@@ -57,7 +57,14 @@ What this trades away: a compromised maintainer token, or a mistaken push, reach
 
 ## Secrets
 
-The only secrets are the five `HOSTINGER_SFTP_*` values, used exclusively by `deploy.yml`. Verified: no credential value appears anywhere in the repository or its history.
+The only secret is `HOSTINGER_API_TOKEN`, used exclusively by `deploy.yml`. Verified: no credential value appears anywhere in the repository or its history.
+
+It replaced five `HOSTINGER_SFTP_*` values. Two reasons that is an improvement rather than a swap like for like:
+
+- **Fewer credentials, each narrower.** Five long-lived SFTP credentials that can read and write anywhere the account can reach became one API token, and the workflow only ever asks the API for a pre-signed upload URL scoped to a single file.
+- **No credential reuse.** The old cache-clear step authenticated to the LiteSpeed purge endpoint as user `cache` using the **SFTP password** — a credential doing double duty for a service it was never issued for. Cache clearing now goes through the same API token.
+
+The account username and site domain are deliberately *not* secrets; they sit in the workflow's `env` block.
 
 `deploy.yml` is **`workflow_dispatch` only, never push-triggered**, and requires the literal string `DEPLOY` as confirmation. It runs against a `production` environment. It is also the only workflow with a `production` environment, and the only one that can reach a secret.
 
