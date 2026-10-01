@@ -117,11 +117,20 @@ if (!checkOnly) {
   // the old name, which is the one outcome the rename exists to prevent.
   const leftover = [];
   for (const file of files) {
-    const p = statSync(file, { throwIfNoEntry: false }) ? file : null;
-    if (!p) continue;
-    const text = readFileSync(p, "utf8");
+    // Read directly rather than stat-then-read. The existence check was a
+    // TOCTOU: a file removed between the two calls makes `readFileSync` throw,
+    // and the guard would abort on an unrelated ENOENT instead of reporting the
+    // stale name it exists to find. One call, one failure mode. (CodeQL flagged
+    // this as `js/file-system-race`.)
+    let text;
+    try {
+      text = readFileSync(file, "utf8");
+    } catch (err) {
+      if (err.code === "ENOENT") continue; // vanished mid-run; nothing to scan
+      throw err;
+    }
     const hits = text.match(/atelier/gi);
-    if (hits) leftover.push(`${relative(root, p)}: ${hits.length}`);
+    if (hits) leftover.push(`${relative(root, file)}: ${hits.length}`);
   }
   for (const [from] of RENAMES) {
     if (statSync(join(root, from), { throwIfNoEntry: false })) leftover.push(`${from} still exists`);
