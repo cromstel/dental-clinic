@@ -25,7 +25,7 @@ export default function DentistsPage() {
         titleLines={["Meet the", "dentists."]}
         supporting="Two dentists, one shared approach: listen first, explain clearly, and treat you like a person."
         accentClass="text-ochre-ink"
-        chipClass="bg-sage text-cocoa"
+        chipClass="bg-sage-light text-cocoa"
       />
       <DoctorsList />
       <InsuranceBand />

@@ -123,8 +123,11 @@ const jsonLd = {
     addressRegion: "Greater Accra",
     addressCountry: "GH",
   },
-  openingHours:
-    "Mo-Fr 08:00-19:00, Sa 09:00-15:00",
+  // Schema.org wants 24h times and this string is machine-read by search
+  // engines. It was still the previous practice's New York hours (8-7 weekdays,
+  // 9-3 Saturday) after the rebrand; the hours the site actually displays are
+  // 8-6 and 9-2. Kept in step with `hours` in content/accra.ts.
+  openingHours: "Mo-Fr 08:00-18:00, Sa 09:00-14:00",
   sameAs: socials.map((s) => s.url),
   priceRange: "$$",
 };

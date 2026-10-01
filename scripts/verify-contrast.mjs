@@ -80,6 +80,14 @@ const PAIRS = [
   ["clay-ink", "bone", 4.5, "clay as text on the bone band", "ServicesList, DoctorsList"],
   ["sage-ink", "bone", 4.5, "sage-ink text on bone", "Experience"],
   ["bone", "sage-ink", 4.5, "bone text on a sage-ink block", "Experience"],
+  // Sage-light exists because --color-sage is mid-tone and clears neither text
+  // family for body copy. These two are the pair that replaces it.
+  ["cocoa", "sage-light", 4.5, "body copy on a sage-light band", "InvisalignFeatures, PageHero, Experience"],
+  // Chip text, one per surface the components actually use.
+  ["bone-on-clay", "clay", 4.5, "chip glyph on the clay band", "PageHero, InvisalignFeatures"],
+  ["ochre-ink", "ochre", 4.5, "chip label on the ochre band", "PageHero, InvisalignFeatures"],
+  ["bone", "clay", 4.5, "display word on the clay band", "Experience"],
+  ["bone", "sage", 3, "display word on the sage band (24px+)", "Experience"],
   ["cocoa", "bone", 4.5, "ink text on the bone surface", "ServicesList, MarqueeBand"],
   ["bone", "ink", 4.5, "bone text on the deepest surface", "ScrollToTop, FocusRing"],
   ["ochre", "ink", 3, "large accent type on ink", "Experience numerals"],
@@ -142,6 +150,11 @@ const FORBIDDEN = [
   ["sage", "bone", 4.5, "sage as text on bone — use sage-ink"],
   ["bone", "ochre", 4.5, "bone on the ochre block — use ochre-ink"],
   ["bone-on-clay", "clay-soft", 4.5, "band tone reused on the raised surface"],
+  // The trap that shipped: --color-sage looks like a light band but is mid-tone,
+  // so cocoa on it is 4.32:1 — under AA by a margin no eye would notice, which
+  // is exactly why it has to be measured rather than judged.
+  ["cocoa", "sage", 4.5, "body copy on sage — use sage-light"],
+  ["bone", "sage", 4.5, "body copy on sage — use sage-light"],
 ];
 
 console.log(`\n  known-bad combinations that must stay rejected\n`);

@@ -25,7 +25,7 @@ export default function ContactPage() {
         titleLines={["Say", "hello."]}
         supporting="Book online below, call the studio, or send an email — whatever feels easiest."
         accentClass="text-ochre-ink"
-        chipClass="bg-ochre text-cocoa"
+        chipClass="bg-ochre text-ochre-ink"
       />
 
       <section className="bg-bone pb-28">

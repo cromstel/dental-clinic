@@ -27,7 +27,7 @@ export default function InvisalignPage() {
         titleLines={invisalign.titleLines}
         supporting={invisalign.body}
         accentClass="text-outline"
-        chipClass="bg-ochre text-cocoa"
+        chipClass="bg-ochre text-ochre-ink"
       />
 
       <section className="bg-bone pb-24">

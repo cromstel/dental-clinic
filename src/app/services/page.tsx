@@ -27,7 +27,7 @@ export default function ServicesPage() {
         titleLines={["Treatments,", "not transactions."]}
         supporting="Eight ways we help you feel good about your smile — explained clearly, delivered comfortably, and planned around your life."
         accentClass="text-ochre-ink"
-        chipClass="bg-ochre text-cocoa"
+        chipClass="bg-ochre text-ochre-ink"
       />
       <ServicesList />
       <SmileTransformation />

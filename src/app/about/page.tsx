@@ -28,7 +28,7 @@ export default function AboutPage() {
         titleLines={["The dentist,", "redesigned."]}
         supporting="A quieter kind of dentistry in Osu — with the technology and expertise you'd expect."
         accentClass="text-outline"
-        chipClass="bg-clay text-cocoa"
+        chipClass="bg-clay text-bone-on-clay"
       />
       <Manifesto />
       <StatBand />

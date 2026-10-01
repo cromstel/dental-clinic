@@ -12,6 +12,21 @@
   --color-clay: #8f3d1c;
   --color-sage: #6f7d63;
   --color-ink: #0d0a08;
+  /* The one surface added after the palette was first measured. Sage is a
+     mid-tone: cocoa on it is 4.32:1 and bone on it is 3.77:1, so *neither*
+     family clears 4.5 for body copy and only bone clears the 3:1 needed for
+     large display type. Every panel that puts 16px text on sage was, as a
+     result, short of AA by a small margin and in one case not legible at all.
+
+     Darkening sage far enough for cocoa to clear AA moves the colour by 58/441
+     in sRGB — a different green. So instead a second, much lighter sage is
+     added for surfaces that carry body copy, paired with cocoa text:
+       sage-light on bone  12.29:1
+       cocoa on sage-light 12.71:1
+
+     --color-sage stays for decorative fills and for the large display words,
+     where bone at 3.77:1 clears AA-large (the Experience word is 64px+). */
+  --color-sage-light: #d8e0cf;
 
   --font-display: var(--font-clash), sans-serif;
   --font-sans: var(--font-inter), system-ui, sans-serif;
@@ -42,25 +57,34 @@
 
   Measured contrast ratios (WCAG 2.1), all re-checked by
   scripts/verify-contrast.mjs on every build:
-    bone          on cocoa       16.28:1
-    bone          on cocoa-soft  15.30:1
-    bone          on cocoa-card  14.61:1
-    bone-dim      on cocoa       10.42:1
-    bone-dim      on cocoa-soft   9.79:1
-    bone-on-clay  on clay         5.13:1
-    ochre         on cocoa        8.32:1
-    ochre         on cocoa-soft   7.82:1
-    ochre         on cocoa-card   7.47:1
-    ochre-ink     on ochre        6.03:1
-    clay-ink      on bone         4.98:1
-    sage-ink      on bone         9.06:1
-    bone          on sage-ink     9.06:1
-    cocoa         on bone        16.28:1
-    bone          on ink         16.98:1
-    ochre         on ink          8.68:1
+    bone          on cocoa        16.28:1
+    bone          on cocoa-soft   15.30:1
+    bone          on cocoa-card   14.61:1
+    bone-dim      on cocoa        10.42:1
+    bone-dim      on cocoa-soft    9.79:1
+    bone-on-clay  on clay          5.13:1
+    ochre         on cocoa         8.32:1
+    ochre         on cocoa-soft    7.82:1
+    ochre         on cocoa-card    7.47:1
+    ochre-ink     on ochre         6.03:1
+    clay-ink      on bone          4.98:1
+    sage-ink      on bone          9.06:1
+    bone          on sage-ink      9.06:1
+    cocoa         on bone         16.28:1
+    bone          on ink          16.98:1
+    ochre         on ink           8.68:1
+
+    --color-sage is mid-tone, so neither text family clears AA for body copy on
+    it (cocoa 4.32:1, bone 3.77:1). Surfaces carrying 16px text use
+    --color-sage-light instead:
+    sage-light    on bone         12.29:1
+    cocoa         on sage-light   12.71:1
 
   Do NOT pair ochre with bone (2.06:1) — use ochre-ink for a label that has to
   sit on the ochre block, and keep ochre itself for text on cocoa.
+
+  Do NOT put 16px text on --color-sage. It is for decorative fills and for
+  display type at 24px or larger, where bone's 3.77:1 clears AA-large.
 */
 @theme static {
   --color-cocoa-soft: #1c1713;

@@ -22,8 +22,12 @@ const icons = {
  *
  * Pairing them in one object makes the text part of the choice, so a surface
  * cannot be swapped without deciding how it is read. Measured against
- * globals.css: bone-on-clay 5.13:1, sage-ink on sage 9.06:1, cocoa on bone
+ * globals.css: bone-on-clay 5.13:1, cocoa on sage-light 12.71:1, cocoa on bone
  * 16.28:1, ochre-ink on ochre 6.03:1.
+ *
+ * The sage entry uses `sage-light` rather than `sage`. Sage is a mid-tone that
+ * clears neither text family for a 28px glyph (cocoa 4.32:1, bone 3.77:1); the
+ * light variant was added for exactly this.
  *
  * The hover text flips with the card, so the hover pairing matters too: the card
  * turns cocoa, so the chip text has to move to the bone family. That is why
@@ -32,7 +36,7 @@ const icons = {
 const CHIPS = [
   { bg: "bg-clay", text: "text-bone-on-clay", hover: "group-hover:text-bone" },
   { bg: "bg-ochre", text: "text-ochre-ink", hover: "group-hover:text-bone" },
-  { bg: "bg-sage", text: "text-sage-ink", hover: "group-hover:text-bone" },
+  { bg: "bg-sage-light", text: "text-cocoa", hover: "group-hover:text-bone" },
   { bg: "bg-bone", text: "text-cocoa", hover: "group-hover:text-bone" },
 ] as const;
 

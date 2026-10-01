@@ -256,7 +256,11 @@ export const experience: ExperiencePrinciple[] = [
     word: "CARE",
     headline: "No lectures",
     copy: "No guilt, no sales pitch, no lecture about the last five years. Just the next sensible step.",
-    color: "sage",
+    // `sage-light`, not `sage`. This panel carries 16px body copy, and sage is a
+    // mid-tone that clears neither text family at that size: cocoa on it is
+    // 4.32:1 and bone on it is 3.77:1. The 64px display word above it would have
+    // been fine on sage (bone, 3.77:1, clears AA-large), but the copy would not.
+    color: "sage-light",
     text: "cocoa",
   },
 ];

@@ -23,7 +23,14 @@ export function formatPhoneLink(tel: string): string {
  * token behind it silently produces `bg-<name>`, which Tailwind will not emit,
  * so the pair is meant to move together.
  */
-export type Swatch = "cocoa" | "cocoa-soft" | "bone" | "clay" | "sage" | "ink";
+export type Swatch =
+  | "cocoa"
+  | "cocoa-soft"
+  | "bone"
+  | "clay"
+  | "sage"
+  | "sage-light"
+  | "ink";
 
 const swatchMap: Record<Swatch, string> = {
   cocoa: "bg-cocoa",
@@ -31,6 +38,7 @@ const swatchMap: Record<Swatch, string> = {
   bone: "bg-bone",
   clay: "bg-clay",
   sage: "bg-sage",
+  "sage-light": "bg-sage-light",
   ink: "bg-ink",
 };
 
@@ -47,8 +55,15 @@ const swatchTextMap: Record<Swatch, string> = {
   cocoa: "text-bone",
   "cocoa-soft": "text-bone",
   bone: "text-cocoa",
+  // Clay as text needs the lighter tone: 4.98:1 against the 6.34:1 that plain
+  // bone gets, because clay sits closer to bone than to cocoa.
   clay: "text-bone-on-clay",
-  sage: "text-cocoa",
+  // Sage is mid-tone and clears neither family for body copy (cocoa 4.32:1,
+  // bone 3.77:1), so content that puts 16px text on sage should be moved to
+  // sage-light rather than reaching for a tone here. This default suits the
+  // large display word that does use sage.
+  sage: "text-bone",
+  "sage-light": "text-cocoa",
   ink: "text-bone",
 };
 
