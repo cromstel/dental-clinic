@@ -103,14 +103,24 @@ for (const [fg, bg, min, why, where] of PAIRS) {
     continue;
   }
   const ratio = contrast(f, b);
+  // An unparseable token must be reported, not rendered. `contrast` returns null
+  // for a length it cannot read — 4- and 8-digit hex, which the token regex
+  // accepts — and calling .toFixed on that throws, so the gate exits with a
+  // stack trace and no report at all. A gate that crashes is worse than one that
+  // fails, because the stack trace says nothing about what to fix.
   const ok = ratio !== null && ratio >= min;
-  if (!ok) {
+  if (ratio === null) {
     failures.push(
-      `${fg} on ${bg} is ${ratio?.toFixed(2) ?? "?"}:1, needs ${min}:1 — ${why} (${where})`,
+      `${fg} or ${bg} is not a readable colour (${f} on ${b}) — ` +
+        `expected 3 or 6 hex digits. Fix the token in globals.css.`,
+    );
+  } else if (!ok) {
+    failures.push(
+      `${fg} on ${bg} is ${ratio.toFixed(2)}:1, needs ${min}:1 — ${why} (${where})`,
     );
   }
   console.log(
-    `  ${fg.padEnd(16)}${bg.padEnd(14)}${ratio.toFixed(2).padStart(7)}  ${String(min).padStart(4)}   ${ok ? "PASS" : "FAIL"}  ${why}`,
+    `  ${fg.padEnd(16)}${bg.padEnd(14)}${(ratio?.toFixed(2) ?? "?").padStart(7)}  ${String(min).padStart(4)}   ${ok ? "PASS" : "FAIL"}  ${why}`,
   );
 }
 
@@ -142,6 +152,16 @@ for (const [fg, bg, min, why] of FORBIDDEN) {
   const ratio = contrast(f, b);
   // These are expected to FAIL AA. That is the point: if one ever passes, the
   // token was changed and the guidance in globals.css needs revisiting.
+  //
+  // `ratio < min` treats null as 0, which would silently label an unreadable
+  // token "still bad" and hide a real defect behind a green line.
+  if (ratio === null) {
+    failures.push(`${fg} or ${bg} is not a readable colour (${f} on ${b})`);
+    console.log(
+      `  ${fg.padEnd(16)}${bg.padEnd(14)}${"?".padStart(7)}        UNREADABLE TOKEN  ${why}`,
+    );
+    continue;
+  }
   const stillBad = ratio < min;
   if (!stillBad) {
     failures.push(

@@ -51,7 +51,7 @@ export function AlignerVisual() {
       <span className="absolute left-6 top-6 rounded-full bg-ochre px-3 py-1 text-xs font-semibold uppercase tracking-widest text-ochre-ink">
         Clear aligners
       </span>
-      <span className="absolute bottom-6 right-6 font-display text-sm font-semibold text-cocoa/70">
+      <span className="absolute bottom-6 right-6 font-display text-sm font-semibold text-bone/70">
         14 trays · ~9 months
       </span>
     </div>

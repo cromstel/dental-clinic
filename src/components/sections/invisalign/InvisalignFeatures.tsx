@@ -11,14 +11,37 @@ const icons = {
   check: CalendarCheck2,
 };
 
-const palette = ["bg-clay", "bg-clay", "bg-sage", "bg-bone"];
+/**
+ * Chip surfaces, paired with the text tone that clears AA on each.
+ *
+ * This was a bare array of backgrounds with one hard-coded `text-cocoa` beside
+ * it, which is exactly the shape that breaks when the palette changes: the
+ * rebrand's codemod mapped the old pastels onto clay and sage without touching
+ * the text, leaving cocoa on clay at 2.57:1 and cocoa on sage at 4.32:1. Both
+ * render; neither is legible.
+ *
+ * Pairing them in one object makes the text part of the choice, so a surface
+ * cannot be swapped without deciding how it is read. Measured against
+ * globals.css: bone-on-clay 5.13:1, sage-ink on sage 9.06:1, cocoa on bone
+ * 16.28:1, ochre-ink on ochre 6.03:1.
+ *
+ * The hover text flips with the card, so the hover pairing matters too: the card
+ * turns cocoa, so the chip text has to move to the bone family. That is why
+ * `hover` is carried alongside `bg` rather than derived.
+ */
+const CHIPS = [
+  { bg: "bg-clay", text: "text-bone-on-clay", hover: "group-hover:text-bone" },
+  { bg: "bg-ochre", text: "text-ochre-ink", hover: "group-hover:text-bone" },
+  { bg: "bg-sage", text: "text-sage-ink", hover: "group-hover:text-bone" },
+  { bg: "bg-bone", text: "text-cocoa", hover: "group-hover:text-bone" },
+] as const;
 
 export function InvisalignFeatures() {
   const reduce = useReducedMotion();
   const items = inv.features.map((f, i) => ({
     ...f,
     icon: Object.values(icons)[i],
-    color: palette[i],
+    chip: CHIPS[i % CHIPS.length],
   }));
 
   return (
@@ -53,12 +76,12 @@ export function InvisalignFeatures() {
                 className="group flex flex-col gap-6 rounded-3xl bg-bone p-8 transition-colors duration-300 hover:bg-cocoa"
               >
                 <span
-                  className={`flex h-14 w-14 items-center justify-center rounded-2xl text-cocoa transition-colors duration-300 group-hover:text-cocoa ${f.color}`}
+                  className={`flex h-14 w-14 items-center justify-center rounded-2xl transition-colors duration-300 ${f.chip.bg} ${f.chip.text} ${f.chip.hover}`}
                 >
                   <Icon className="h-7 w-7" aria-hidden />
                 </span>
                 <div>
-                  <p className="font-display text-sm font-semibold text-cocoa/70 tabular-nums transition-colors duration-300 group-hover:text-bone/40">
+                  <p className="font-display text-sm font-semibold text-cocoa/70 tabular-nums transition-colors duration-300 group-hover:text-bone/70">
                     0{i + 1}
                   </p>
                   <h3 className="mt-1 font-display text-xl font-semibold tracking-tight text-cocoa transition-colors duration-300 group-hover:text-bone">

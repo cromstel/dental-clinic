@@ -128,7 +128,20 @@ for (const { file, count } of changed.sort((a, b) => b.count - a.count)) {
  * the old utilities, so scanning them before writing would always report the
  * whole surface back. Under `--check` the per-file table above is the output.
  */
-if (!checkOnly) {
+if (checkOnly) {
+  // The header promises a non-zero exit when work is outstanding, so a CI step
+  // running `--check` cannot report success while retired utilities are still in
+  // the tree. The earlier version printed the table and exited 0, which is the
+  // one outcome a check must never produce.
+  if (changed.length > 0) {
+    console.error(
+      `\n${totalReplacements} retired colour reference(s) still present. ` +
+        `Re-run without --check to migrate them.`,
+    );
+    process.exit(1);
+  }
+  console.log("\nno retired colour utilities remain.");
+} else {
   const leftover = [];
   for (const file of targets) {
     const text = readFileSync(file, "utf8");

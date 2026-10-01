@@ -75,7 +75,7 @@ export function Reviews() {
           <div className="flex flex-col items-start justify-between gap-10 lg:items-end">
             <div className="lg:text-right">
               <p className="text-sm uppercase tracking-[0.25em] text-cocoa/70">
-                Placeholder reviews
+                In their words
               </p>
               <div className="mt-10 flex items-center gap-4">
                 <button
@@ -121,8 +121,7 @@ export function Reviews() {
           </div>
         </div>
 
-        <p className="mt-14 text-sm text-cocoa/60">{rating.headline}</p>
-      </div>
+        </div>
     </section>
   );
 }
