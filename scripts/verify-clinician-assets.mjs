@@ -66,9 +66,19 @@ if (blockStart === -1 || blockEnd === -1 || blockEnd < blockStart) {
   console.error("  If the seeds moved, update this script rather than deleting the check.");
   process.exit(1);
 }
+/**
+ * Both quote styles are matched. A double-quoted-only pattern lets a clinician
+ * declared `slug: 'efua-mensah'` slip through unnoticed: the slug is not found,
+ * its four files are never checked, and because the *other* clinicians are still
+ * found the "did we find any?" guard below is satisfied. The check then reports
+ * green while a clinician has no portrait at all.
+ *
+ * The backreference (`\1`) requires the closing quote to match the opening one,
+ * so `slug: "abc'` cannot produce a bogus slug.
+ */
 const clinicianSlugs = [
-  ...source.slice(blockStart, blockEnd).matchAll(/slug:\s*"([a-z0-9-]+)"/g),
-].map((m) => m[1]);
+  ...source.slice(blockStart, blockEnd).matchAll(/slug:\s*(["'])([a-z0-9-]+)\1/g),
+].map((m) => m[2]);
 
 if (!clinicianSlugs.length) {
   console.error("verify-clinician-assets: no clinician slugs found in the clinician block.");
