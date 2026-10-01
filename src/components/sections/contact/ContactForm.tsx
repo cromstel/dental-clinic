@@ -84,7 +84,7 @@ export function ContactForm() {
             type="email"
             value={fields.email}
             onChange={(e) => update("email", e.target.value)}
-            placeholder="you@email.com"
+            placeholder="you@example.com"
             className={inputCls}
           />
         </label>

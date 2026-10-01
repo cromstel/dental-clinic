@@ -168,5 +168,8 @@ jobs:
       # The host check is cheap and reads only committed files, so it can also
       # run before the slow build — a drifted origin should fail in seconds, not
       # after a full static export.
-      - name: Check declared origin matches static files
+      #
+      # It also sweeps every published email address, so an address on a foreign
+      # domain fails here rather than reaching a patient-facing page.
+      - name: Check declared origin and email domains
         run: node scripts/verify-hosts.mjs
