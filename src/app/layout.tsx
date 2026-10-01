@@ -67,9 +67,11 @@ const cormorant = localFont({
 
 export const metadata: Metadata = {
   // Must match the host the site is actually served from, otherwise every
-  // canonical / og:url this generates points at a different origin than the
-  // one in robots.txt and sitemap.xml. Keep in sync with public/robots.txt.
-  metadataBase: new URL("https://dental-clinic.cromstelit.com"),
+  // The origin every canonical / og:url resolves against. Read from site.url
+  // rather than repeated inline, and cross-checked at build time against the
+  // static copies in public/robots.txt and public/sitemap.xml by
+  // scripts/verify-hosts.mjs, so the two cannot silently diverge.
+  metadataBase: new URL(site.url),
   title: "CITGROUP Dental Studio | Dentist in Manhattan, NYC",
   description: site.description,
   keywords: [

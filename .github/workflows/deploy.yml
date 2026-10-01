@@ -1,6 +1,6 @@
 name: Deploy
 
-# Publishes the static export to Hostinger over SFTP.
+# Publishes the static export to Hostinger.
 #
 # NOT WIRED TO PUSH ON PURPOSE. This workflow is `workflow_dispatch` only,
 # because a deploy replaces production and the `.htaccess` is load-bearing. The
@@ -10,14 +10,24 @@ name: Deploy
 #
 # CI gates every push. Deploy is a deliberate human action.
 #
-# Required repository secrets (Settings -> Secrets and variables -> Actions):
-#   HOSTINGER_SFTP_HOST     e.g. ftp.us.hostinger.com
-#   HOSTINGER_SFTP_PORT     e.g. 65002
-#   HOSTINGER_SFTP_USER     SFTP user created in hPanel
-#   HOSTINGER_SFTP_PASSWORD
-#   HOSTINGER_SFTP_DIR      remote directory, e.g. /public_html/dental-clinic
+# Uses Hostinger's static-site archive API, not SFTP. The previous version
+# uploaded with `lftp mirror`, which cannot work: `mirror` transfers
+# *directories*, and this passes a single .zip file. That step had never run
+# (its secrets were never set), which is why the breakage was invisible. It
+# also needed five SFTP credentials, and reused the SFTP password as the
+# username for a LiteSpeed purge endpoint — a credential doing double duty for
+# something it was never issued for.
 #
-# Prefer an SFTP user scoped to the site directory over the primary FTP account.
+# The API path needs one secret and matches how this site is actually deployed:
+#   1. generate-upload-url       -> pre-signed TUS upload credentials
+#   2. TUS POST + PATCH          -> upload the archive
+#   3. deploy-static-site-archive-> replace the site root from the archive
+#   4. cache clear               -> drop the edge copy
+#
+# Required repository secret (Settings -> Secrets and variables -> Actions):
+#   HOSTINGER_API_TOKEN   Hostinger API token with website + files access
+#
+# The account username and domain are not secrets and live in `env` below.
 
 on:
   workflow_dispatch:
@@ -33,6 +43,15 @@ on:
 
 permissions:
   contents: read
+
+env:
+  # Repeated in one place only. They appeared hard-coded in four steps before,
+  # which meant a domain change silently left a step pointing at the old host.
+  HOSTINGER_USERNAME: u255640043
+  HOSTINGER_DOMAIN: dental-clinic.cromstelit.com
+  SITE_URL: https://dental-clinic.cromstelit.com
+  # Name of the archive inside public_html. Must match ARCHIVE below.
+  ARCHIVE: out.zip
 
 # Never let two deploys run at once — a partial upload from one racing another
 # is worse than either alone.
@@ -54,6 +73,9 @@ jobs:
 
   build:
     name: Build
+    # Gates on the confirmation job. Without this the build runs regardless, and
+    # since `deploy` only needs `build`, a mistyped confirmation would still
+    # reach production — the gate would be decorative.
     needs: verify-inputs
     runs-on: ubuntu-latest
     steps:
@@ -66,29 +88,58 @@ jobs:
 
       - run: npm ci
 
-      # verify-export.mjs runs here too, so a broken export can never reach SFTP.
+      # verify-export.mjs, verify-hosts.mjs and stage-server-config.mjs all run
+      # inside `npm run build`, so a broken export, a host mismatch, or a missing
+      # AVIF MIME rule can never reach the upload.
       - name: Build
         run: npm run build
 
-      - name: Package export as a tarball
-        # Single archive: avoids hundreds of small SFTP round-trips, which is
-        # where partial uploads come from. `out/` is the archive root so paths
-        # land directly in the remote directory with no wrapping folder.
+      - name: Package export as an archive
+        # Single archive: avoids hundreds of small round-trips, which is where
+        # partial uploads come from. The deploy endpoint replaces the site root
+        # from this archive, so paths must sit at the archive root with no
+        # wrapping directory.
         run: |
-          set -e
-          tar -czf export.tar.gz -C out .
-          echo "archive: $(du -h export.tar.gz | cut -f1)"
-          # Sanity: the .htaccess must be inside the archive, not just in out/.
-          if ! tar -tzf export.tar.gz | grep -q '^\./\.htaccess$'; then
+          set -euo pipefail
+          rm -f "$ARCHIVE"
+          # Zip from inside out/ so entries are "./index.html", "./images/…".
+          # Do NOT exclude dotfiles here: `zip` includes them by default, and an
+          # `-x '.*'` rule meant to skip junk would also skip ./.htaccess — the
+          # one file whose absence silently breaks every image on the site.
+          ( cd out && zip -qr "$GITHUB_WORKSPACE/$ARCHIVE" . -x '.DS_Store' '*/.DS_Store' )
+          echo "archive: $(du -h "$ARCHIVE" | cut -f1) ($(stat -c%s "$ARCHIVE") bytes)"
+
+          # Take the listing once and grep the variable, never `zipinfo | grep -q`.
+          # `grep -q` exits the instant it matches, closing the pipe; `zipinfo`
+          # still writing entries takes SIGPIPE and exits 141, and `pipefail`
+          # turns that into a failed pipeline. Under `if !` that reads as "check
+          # did not pass", so a perfectly good archive is reported as missing its
+          # .htaccess. It is a race, not a certainty: it passes on a 156-entry
+          # listing and fails on a large one. This is the same bug already fixed
+          # in release.yml, reintroduced here.
+          listing=$(zipinfo -1 "$ARCHIVE")
+
+          # The .htaccess must be inside the archive, not merely present in out/.
+          # Without it LiteSpeed serves .avif as text/plain and every <picture>
+          # falls back — the exact outage this workflow exists to prevent.
+          if ! printf '%s\n' "$listing" | grep -xE '(\./)?\.htaccess' > /dev/null; then
             echo "::error::.htaccess missing from archive — the deploy would break AVIF rendering"
             exit 1
           fi
           echo "  .htaccess present in archive"
 
+          # Belt and braces: the archive must not contain itself, or the upload
+          # carries a payload that changes while it is being uploaded.
+          if printf '%s\n' "$listing" | grep -xE "(\./)?$ARCHIVE" > /dev/null; then
+            echo "::error::archive contains itself"
+            exit 1
+          fi
+          echo "  archive does not contain itself"
+
       - uses: actions/upload-artifact@v4
         with:
-          name: export-tarball
-          path: export.tar.gz
+          name: export-archive
+          path: ${{ env.ARCHIVE }}
           retention-days: 7
           if-no-files-found: error
 
@@ -100,97 +151,185 @@ jobs:
     steps:
       - uses: actions/download-artifact@v4
         with:
-          name: export-tarball
+          name: export-archive
 
-      # Same SFTP client Hostinger documents for scripted uploads.
-      - name: Install lftp
-        run: sudo apt-get update && sudo apt-get install -y lftp
-
-      - name: Verify secrets are present
+      - name: Verify token is present
         env:
-          HOST: ${{ secrets.HOSTINGER_SFTP_HOST }}
-          PORT: ${{ secrets.HOSTINGER_SFTP_PORT }}
-          USER: ${{ secrets.HOSTINGER_SFTP_USER }}
-          PASS: ${{ secrets.HOSTINGER_SFTP_PASSWORD }}
-          DIR: ${{ secrets.HOSTINGER_SFTP_DIR }}
+          TOKEN: ${{ secrets.HOSTINGER_API_TOKEN }}
         run: |
           set -e
-          missing=0
-          for v in HOST PORT USER PASS DIR; do
-            if [ -z "${!v}" ]; then
-              echo "::error::missing repository secret: HOSTINGER_SFTP_$v"
-              missing=1
-            fi
-          done
-          [ "$missing" -eq 0 ] || exit 1
-          echo "  all SFTP secrets present"
+          if [ -z "$TOKEN" ]; then
+            echo "::error::missing repository secret: HOSTINGER_API_TOKEN"
+            echo "  Create one in hPanel (Account -> API) with website + files access,"
+            echo "  then add it under Settings -> Secrets and variables -> Actions."
+            exit 1
+          fi
+          echo "  HOSTINGER_API_TOKEN present"
 
-      - name: Upload
+      - name: Generate upload URL
+        id: upload
         env:
-          HOST: ${{ secrets.HOSTINGER_SFTP_HOST }}
-          PORT: ${{ secrets.HOSTINGER_SFTP_PORT }}
-          USER: ${{ secrets.HOSTINGER_SFTP_USER }}
-          PASS: ${{ secrets.HOSTINGER_SFTP_PASSWORD }}
-          DIR: ${{ secrets.HOSTINGER_SFTP_DIR }}
+          TOKEN: ${{ secrets.HOSTINGER_API_TOKEN }}
         run: |
           set -euo pipefail
-          # --mirror: make the remote exactly match the archive. Without it, files
-          # deleted from the build survive on the server and can shadow new ones.
-          # -O2 batches transfers to reduce round-trips; --timeout avoids hanging.
-          lftp -c "
-            set cmd:fail-exit yes;
-            set net:timeout 60;
-            set net:max-retries 3;
-            set net:reconnect-interval-base 5;
-            open -u \"$USER\",\"$PASS\" -p \"$PORT\" \"$HOST\";
-            mirror -R --delete --verbose --parallel=4 /github/workspace/export.tar.gz $DIR;
-          "
+          # Path and body shape verified against the published OpenAPI spec
+          # (hosting_generateUploadURLV1), not guessed.
+          curl -sS --fail-with-body -X POST \
+            -H "Authorization: Bearer $TOKEN" \
+            -H "Content-Type: application/json" \
+            -d "{\"username\":\"$HOSTINGER_USERNAME\",\"domain\":\"$HOSTINGER_DOMAIN\"}" \
+            "https://developers.hostinger.com/api/hosting/v1/files/upload-urls" \
+            > upload-url.json
+
+          url=$(node -p "JSON.parse(require('fs').readFileSync('upload-url.json','utf8')).url")
+          auth=$(node -p "JSON.parse(require('fs').readFileSync('upload-url.json','utf8')).auth_key")
+          rest=$(node -p "JSON.parse(require('fs').readFileSync('upload-url.json','utf8')).rest_auth_key")
+          rm -f upload-url.json
+
+          # The upload destination comes from an API response, and the next step
+          # sends both keys to it. If that URL were ever anything other than
+          # Hostinger's file store, the deploy would hand over working upload
+          # credentials to it. Constrain the destination rather than trust it.
+          # Update this if Hostinger moves its file store.
+          case "$url" in
+            https://*.hstgr.io/*|https://*.hostinger.com/*) ;;
+            *)
+              echo "::error::unexpected upload destination: ${url%%\?*}"
+              echo "  Refusing to send upload credentials to a host outside Hostinger."
+              exit 1
+              ;;
+          esac
+
+          # Register the values as secrets BEFORE they reach $GITHUB_OUTPUT.
+          # Outputs are interpolated into later steps' environments and echoed in
+          # some failure paths, and add-mask only redacts what it was told about
+          # beforehand — masking after the write leaves them visible in the log.
+          echo "::add-mask::$auth"
+          echo "::add-mask::$rest"
+
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+          echo "auth=$auth" >> "$GITHUB_OUTPUT"
+          echo "rest=$rest" >> "$GITHUB_OUTPUT"
+          echo "  upload URL issued for $HOSTINGER_DOMAIN"
+
+      - name: Upload archive (TUS)
+        env:
+          URL: ${{ steps.upload.outputs.url }}
+          AUTH: ${{ steps.upload.outputs.auth }}
+          REST: ${{ steps.upload.outputs.rest }}
+        run: |
+          set -euo pipefail
+          size=$(stat -c%s "$ARCHIVE")
+          endpoint="$URL/$ARCHIVE?override=true"
+
+          # Step 1 of the TUS protocol: create the upload, expect 201.
+          code=$(curl -sS -o /dev/null -w '%{http_code}' -X POST "$endpoint" \
+            -H "X-Auth: $AUTH" -H "X-Auth-Rest: $REST" \
+            -H "Tus-Resumable: 1.0.0" \
+            -H "Upload-Length: $size" -H "Upload-Offset: 0")
+          [ "$code" = "201" ] || { echo "::error::TUS create returned $code, expected 201"; exit 1; }
+          echo "  upload created ($size bytes)"
+
+          # Step 2: send the bytes. 204 with Upload-Offset == size means done.
+          code=$(curl -sS -o /dev/null -D tus-headers.txt -w '%{http_code}' -X PATCH "$endpoint" \
+            -H "X-Auth: $AUTH" -H "X-Auth-Rest: $REST" \
+            -H "Tus-Resumable: 1.0.0" \
+            -H "Content-Type: application/offset+octet-stream" \
+            -H "Upload-Offset: 0" \
+            --data-binary "@$ARCHIVE")
+          [ "$code" = "204" ] || { echo "::error::TUS patch returned $code, expected 204"; exit 1; }
+
+          sent=$(grep -i '^upload-offset:' tus-headers.txt | tail -1 | tr -dc '0-9')
+          if [ "$sent" != "$size" ]; then
+            echo "::error::server accepted $sent of $size bytes — partial upload, refusing to deploy"
+            exit 1
+          fi
+          echo "  uploaded in full"
+
+      - name: Replace site from archive
+        env:
+          TOKEN: ${{ secrets.HOSTINGER_API_TOKEN }}
+        run: |
+          set -euo pipefail
+          # username and domain are PATH parameters here, not body fields — the
+          # body carries only archive_path, relative to the website root.
+          # (hosting_deployStaticSiteArchiveV1; synchronous, returns 200.)
+          curl -sS --fail-with-body -X POST \
+            -H "Authorization: Bearer $TOKEN" \
+            -H "Content-Type: application/json" \
+            -d "{\"archive_path\":\"$ARCHIVE\"}" \
+            "https://developers.hostinger.com/api/hosting/v1/accounts/$HOSTINGER_USERNAME/websites/$HOSTINGER_DOMAIN/deploy"
+          echo
+          echo "  site root replaced from $ARCHIVE"
 
       - name: Clear server cache
-        # A cached edge will keep serving the previous build. Without this the
-        # deploy looks like it silently did nothing.
         env:
-          PASS: ${{ secrets.HOSTINGER_SFTP_PASSWORD }}
+          TOKEN: ${{ secrets.HOSTINGER_API_TOKEN }}
         run: |
-          set -e
-          # Best-effort LiteSpeed cache clear over HTTP, if reachable and enabled.
-          # Non-fatal: some hosts block it, and the deploy itself has succeeded.
-          curl -sS --max-time 20 -o /dev/null -w '%{http_code}\n' \
-            -u "cache:$PASS" \
-            "https://dental-clinic.cromstelit.com/.well-known/litespeed-purge" \
-            || echo "  cache clear endpoint unreachable; CDN will expire on its own"
+          set -euo pipefail
+          # Best-effort: the deploy has already succeeded, and a stale edge that
+          # expires on its own is better than a failed job that reads as a failed
+          # deploy. Note this is DELETE, not POST, and takes no body.
+          if curl -sS --fail-with-body -X DELETE \
+            -H "Authorization: Bearer $TOKEN" \
+            "https://developers.hostinger.com/api/hosting/v1/accounts/$HOSTINGER_USERNAME/websites/$HOSTINGER_DOMAIN/cache/clear" \
+            > /dev/null; then
+            echo "  cache cleared"
+          else
+            echo "  warning: cache clear failed; edge will expire on its own"
+          fi
+
+      - name: Wait for site to answer
+        run: |
+          set -euo pipefail
+          # Replacing the site root briefly 404s while the archive is swapped in.
+          # Poll before asserting anything, or the smoke test below fails on the
+          # deploy's own latency and reports a healthy deploy as broken.
+          for i in $(seq 1 30); do
+            code=$(curl -sS -o /dev/null -w '%{http_code}' --max-time 15 "$SITE_URL/?cb=$RANDOM" || echo 000)
+            if [ "$code" = "200" ]; then
+              echo "  site responding after ${i} attempt(s)"
+              exit 0
+            fi
+            sleep 5
+          done
+          echo "::error::site did not return 200 after 150s — the deploy replaced the root but the site is not serving"
+          exit 1
 
       - name: Post-deploy smoke test
         run: |
-          set -e
-          base="https://dental-clinic.cromstelit.com"
+          set -euo pipefail
           fail=0
           check() {
             code=$(curl -sS -o /dev/null -w '%{http_code}' --max-time 20 "$1?cb=$RANDOM")
             echo "  $code  $1"
             [ "$code" = "$2" ] || fail=1
           }
-          # Bypass the CDN with a cache-buster so we test the origin, not the edge.
-          check "$base/" 200
-          check "$base/about/" 200
-          check "$base/dentists/" 200
-          check "$base/services/" 200
-          check "$base/faq/" 200
-          check "$base/contact/" 200
-          check "$base/invisalign/" 200
-          check "$base/sitemap.xml" 200
-          check "$base/robots.txt" 200
+          # Cache-busted so we test the origin, not the edge.
+          check "$SITE_URL/" 200
+          check "$SITE_URL/about/" 200
+          check "$SITE_URL/dentists/" 200
+          check "$SITE_URL/services/" 200
+          check "$SITE_URL/faq/" 200
+          check "$SITE_URL/contact/" 200
+          check "$SITE_URL/invisalign/" 200
+          check "$SITE_URL/sitemap.xml" 200
+          check "$SITE_URL/robots.txt" 200
           # RSC payload — the exact thing that broke soft navigation before.
-          check "$base/index.txt" 200
-          check "$base/about/index.txt" 200
+          check "$SITE_URL/index.txt" 200
+          check "$SITE_URL/about/index.txt" 200
+          # An unknown path must 404 rather than serve the homepage, which
+          # would look like success to a crawler and be an infinite-URL problem
+          # in practice.
+          check "$SITE_URL/zzz-deploy-smoke-check" 404
           exit $fail
 
       - name: Verify AVIF MIME type
         # The regression this whole workflow is shaped around. If .htaccess is
         # missing, this returns text/plain and every <picture> falls back.
         run: |
-          set -e
-          url="https://dental-clinic.cromstelit.com/images/doctors/ethan-800w.avif?cb=$RANDOM"
+          set -euo pipefail
+          url="$SITE_URL/images/doctors/ethan-800w.avif?cb=$RANDOM"
           ct=$(curl -sS -o /dev/null -w '%{content_type}' --max-time 20 "$url")
           echo "  Content-Type: $ct"
           if [ "$ct" != "image/avif" ]; then
@@ -198,6 +337,59 @@ jobs:
             exit 1
           fi
           echo "  AVIF MIME correct"
+
+      - name: Verify cache policy
+        # Guards the regression that was misdiagnosed twice as CDN behaviour:
+        # images carrying a year-long immutable cache because a stale config file
+        # was being staged over the real one.
+        run: |
+          set -uo pipefail
+          fail=0
+
+          header() {
+            curl -sS -o /dev/null -D - --max-time 20 "$1?cb=$RANDOM" \
+              | grep -i '^cache-control:' | tail -1 | tr -d '\r'
+          }
+
+          # A directive counts only when terminated by a comma or the end of the
+          # value. The previous bare-substring test also accepted
+          # "max-age=6048000" — and, more to the point, "max-age=604800,
+          # immutable", which is the exact regression this step exists to catch.
+          # It could therefore never fail on the thing it was added to detect.
+          #
+          # These use here-strings rather than `printf … | grep -q`. In a pipe
+          # under pipefail, `grep -q` exiting on first match can SIGPIPE the
+          # writer and turn a match into a non-zero pipeline. The input is a
+          # single header line, so it would never actually block, but relying
+          # on that is exactly the reasoning that hid the packaging bug.
+          check_contains() {
+            if grep -qiE -- "$3" <<< "$2"; then
+              echo "  ok       $1"
+            else
+              echo "::error::$1 — got '$2'"
+              fail=1
+            fi
+          }
+          check_absent() {
+            if grep -qiE -- "$3" <<< "$2"; then
+              echo "::error::$1 — got '$2'"
+              fail=1
+            else
+              echo "  ok       $1"
+            fi
+          }
+
+          img=$(header "$SITE_URL/images/doctors/ethan-800w.avif")
+          echo "  images: ${img:-<no Cache-Control header>}"
+          check_contains "image TTL must be exactly 604800" "$img" 'max-age=604800(,|$)'
+          check_absent   "images must never be immutable"      "$img" 'immutable'
+
+          html=$(header "$SITE_URL/")
+          echo "  html:   ${html:-<no Cache-Control header>}"
+          check_contains "HTML must revalidate immediately"    "$html" 'max-age=0(,|$)'
+          check_contains "HTML must carry must-revalidate"     "$html" 'must-revalidate'
+
+          exit $fail
 
       - name: Summary
         if: always()
@@ -208,4 +400,5 @@ jobs:
             echo "- Triggered by: @${{ github.actor }}"
             echo "- Commit: \`${{ github.sha }}\`"
             echo "- Environment: production"
+            echo "- Archive: \`$ARCHIVE\`"
           } >> "$GITHUB_STEP_SUMMARY"

@@ -8,20 +8,60 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 
 ### Security
-- Branch protection on `main` requires 1 approving review, dismissal of stale
-  reviews on push, last-push approval, enforcement on admins, linear history,
-  and conversation resolution. Branch deletion and force-pushes blocked.
+- Branch protection on `main`: 5 required status checks with `strict` on,
+  enforcement on admins, linear history, and branch deletion and force-pushes
+  blocked.
+- The 1-approving-review requirement was **removed**. In a single-maintainer
+  repository it cannot be satisfied — the author is the only possible approver
+  and GitHub blocks self-approval — so it acted as a permanent deadlock rather
+  than a control. The trade-off is recorded in `SECURITY.md`: a compromised
+  token or a careless push now reaches `main` once CI is green, and the checks
+  do not cover subtle or malicious logic changes.
 - Removed the redundant `ci-gate` ruleset; branch protection supersedes it.
 - CodeQL `security-extended` is blocking on push to `main` and on every PR.
 - Dependabot security updates and automated security fixes enabled.
+- Deploy credentials reduced from five SFTP secrets to one API token. The old
+  cache-clear step reused the SFTP password to authenticate to the LiteSpeed
+  purge endpoint; that credential is no longer doing double duty.
 
 ### Fixed
 - `js/log-injection` (severity: error) at two sites in the image pipeline.
   Externally-derived values are no longer interpolated into log lines.
 - `SECURITY.md` described signed-commit enforcement as an account-level
   setting. It is a branch-protection control (`required_signatures`).
+- The enquiry form stamped `-- Sent via citgroupdental.com` into every email
+  the practice received. That domain is not the one the site is served from
+  and does not resolve in DNS. It now reads the configured origin.
+- `deploy.yml` uploaded with `lftp mirror`, which transfers directories and
+  cannot upload the single archive the step passed it. The step had never run,
+  because its secrets were never set, so the breakage was invisible. It also
+  packaged the archive with an exclusion rule that stripped dotfiles, which
+  would have removed the `.htaccess` and broken AVIF rendering site-wide.
+- `deploy.yml` dropped the `needs: verify-inputs` edge, so the confirmation
+  gate could not stop a deploy — the build ran regardless and only `build` was
+  a precondition of `deploy`.
+- The README claimed the CDN overrides `.htaccess` cache headers and that image
+  files must be renamed to defeat caching. Both were wrong: the year-long
+  `immutable` header came from a stale origin config file, and a purge is
+  sufficient.
+- `.gitignore` pointed at `config/htaccess`, which no longer exists. The single
+  source of truth is `public/.htaccess`.
+
+### Changed
+- Deploys publish through Hostinger's static-site archive API instead of SFTP.
+  Endpoint paths, HTTP methods, and the path-versus-body split were verified
+  against the published OpenAPI specification rather than guessed.
+- Post-deploy checks extended: the smoke test now asserts an unknown URL
+  returns 404, and a new step asserts the live cache policy matches
+  `.htaccess`, so a silent regression like the one above fails the deploy.
 
 ### Added
+- `site.url` as the single source of truth for the production origin, read by
+  `metadataBase` and the enquiry form.
+- `scripts/verify-hosts.mjs`, wired into `npm run build` and into CI, which
+  fails the build when `public/robots.txt` or `public/sitemap.xml` drift from
+  `site.url`. Those files cannot import it, so nothing else would catch a move:
+  the site would serve fine while pointing search engines at the old host.
 - Repository documentation: `CONTRIBUTING.md`, `SECURITY.md`, and a rewritten
   README covering branch protection, visibility, and the privacy constraints.
 - `design/accra-dental-atelier.html` — a standalone design artifact, plus

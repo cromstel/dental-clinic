@@ -15,7 +15,7 @@ The actual attack surface is:
 | `mailto:` enquiry form | The only form on the site | Composes in the visitor's own mail client. Nothing is transmitted to or stored on any server |
 | Host config | `public/.htaccess` | LiteSpeed directives, shipped inside the deploy archive, reviewed in diffs |
 | Build pipeline | `npm ci` → `next build` | Runs in CI on ephemeral runners; no job triggered by a pull request has access to secrets |
-| Deploy | SFTP upload, `workflow_dispatch` only | The only job holding credentials |
+| Deploy | Hostinger API archive upload, `workflow_dispatch` only | The only job holding a credential |
 
 There is **no authentication layer to bypass** because there are no accounts. There is **no cookie** because there is nothing to track — see the privacy constraints below.
 
@@ -57,7 +57,17 @@ What this trades away: a compromised maintainer token, or a mistaken push, reach
 
 ## Secrets
 
-The only secrets are the five `HOSTINGER_SFTP_*` values, used exclusively by `deploy.yml`. Verified: no credential value appears anywhere in the repository or its history.
+The only secret is `HOSTINGER_API_TOKEN`, used exclusively by `deploy.yml`. Verified: no credential value appears anywhere in the repository or its history.
+
+It replaced five `HOSTINGER_SFTP_*` values. What actually changed, stated precisely rather than favourably:
+
+- **Fewer credentials.** Five long-lived SFTP secrets became one API token. That is a real reduction in the number of secrets to store, rotate and leak.
+- **But not a narrower blast radius, on current evidence.** `HOSTINGER_API_TOKEN` authorises three things in this workflow: issuing a pre-signed upload URL, **replacing the site's entire root**, and **clearing its cache**. Only the *pre-signed upload URL* is scoped to a single file — that scoping belongs to the URL, not to the token. Anyone holding the token can replace production directly. Do not read "one scoped credential" as "limited authority"; the token is a full deploy credential for this account, and the precise scope is a property of Hostinger's token permissions that has not been independently confirmed.
+- **No credential reuse.** The old cache-clear step authenticated to the LiteSpeed purge endpoint as user `cache` using the **SFTP password** — a credential doing double duty for a service it was never issued for. Cache clearing now goes through the API token.
+
+The account username and site domain are deliberately *not* secrets; they sit in the workflow's `env` block.
+
+The workflow treats the pre-signed upload credentials as secrets too: they are registered with `::add-mask::` *before* being written to `$GITHUB_OUTPUT`, and the upload destination returned by the API is checked against Hostinger's own file-store domains before either key is sent to it. Without the second check, a redirect or a hostile response would harvest working upload credentials.
 
 `deploy.yml` is **`workflow_dispatch` only, never push-triggered**, and requires the literal string `DEPLOY` as confirmation. It runs against a `production` environment. It is also the only workflow with a `production` environment, and the only one that can reach a secret.
 

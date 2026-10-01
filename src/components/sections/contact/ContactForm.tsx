@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { ChevronDown } from "lucide-react";
 import { contactForm, site } from "@/content/site";
-import { cn } from "@/lib/utils";
+import { cn, toMailto } from "@/lib/utils";
 
 type Fields = {
   name: string;
@@ -44,11 +44,14 @@ export function ContactForm() {
       "",
       fields.message,
       "",
-      "-- Sent via citgroupdental.com",
+      // The previous literal named citgroupdental.com, a host this site is not
+      // served from, so every enquiry email the practice received carried the
+      // wrong source. Read the configured origin instead.
+      `-- Sent via ${site.url.replace(/^https?:\/\//, "")}`,
     ]
       .filter(Boolean)
       .join("\n");
-    window.location.href = `mailto:${site.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    window.location.href = toMailto(site.email, subject, body);
     setSent(true);
   }
 

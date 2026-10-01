@@ -14,10 +14,12 @@
 /build
 
 # deploy artifacts — generated output, reproduce with `npm run build`.
-# The host config that these deploys depend on is tracked at config/htaccess,
-# not here: losing it silently breaks AVIF rendering on the live site.
+# The host config these deploys depend on is NOT here: it is tracked at
+# public/.htaccess, which `next build` copies into out/ so it travels inside the
+# deploy archive. Losing it silently breaks AVIF rendering on the live site.
 /deploy/
 export.tar.gz
+out.zip
 
 # OS
 Thumbs.db

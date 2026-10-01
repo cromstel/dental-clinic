@@ -112,7 +112,7 @@ It matters because:
 - `/images/*` is **deliberately excluded** from that policy. Those are authored filenames with no content hash (`ethan-800w.avif`), so pinning them would keep replaced photography cached for a year. They get a 7-day TTL with `stale-while-revalidate` instead.
 - HTML is set to `max-age=0, must-revalidate`, and the RSC `.txt` payloads / sitemap / robots to a 5-minute `stale-while-revalidate` window, so a redeploy is picked up quickly while the CDN still absorbs repeat traffic.
 
-> Hostinger's `hcdn` CDN applies its own `immutable` policy to static assets at the edge, which overrides what `.htaccess` requests. After swapping an image under the same filename, purge the Hostinger cache or rename the file — otherwise the old image can be served for up to a year.
+> The CDN does **not** override `.htaccess`. If an asset returns a cache policy you did not write, the origin is serving a different config file — check that `public/.htaccess` is what actually reached the server. Renaming image files to defeat caching is not necessary; replacing an image under the same filename and purging the cache is enough.
 
 > If you ever find `public/.htaccess` missing, do **not** recreate it from memory — it previously existed only in a local temp folder and was lost. `git log` has it.
 
@@ -135,24 +135,30 @@ It matters because:
 Verify afterwards: all 7 routes 200, unknown URL shows the 404 page, `/robots.txt` and `/sitemap.xml` 200, and `/images/services/cosmetic.avif` returns `Content-Type: image/avif` (if it returns `text/plain`, `.htaccess` did not upload).
 
 ### Automated deploys
-`.github/workflows/deploy.yml` publishes to Hostinger over SFTP. It is **`workflow_dispatch` only, not push-triggered** — a deploy replaces production and the `.htaccess` is load-bearing, so it is a deliberate human action. Run it from the Actions tab and type `DEPLOY` to confirm.
+`.github/workflows/deploy.yml` publishes to Hostinger. It is **`workflow_dispatch` only, not push-triggered** — a deploy replaces production and the `.htaccess` is load-bearing, so it is a deliberate human action. Run it from the Actions tab and type `DEPLOY` to confirm.
 
-It requires these repository secrets (Settings → Secrets and variables → Actions):
+It requires one repository secret (Settings → Secrets and variables → Actions):
 
-| Secret | Example |
+| Secret | Where to get it |
 |---|---|
-| `HOSTINGER_SFTP_HOST` | `ftp.us.hostinger.com` |
-| `HOSTINGER_SFTP_PORT` | `65002` |
-| `HOSTINGER_SFTP_USER` | SFTP user created in hPanel |
-| `HOSTINGER_SFTP_PASSWORD` | — |
-| `HOSTINGER_SFTP_DIR` | `/public_html/dental-clinic` |
+| `HOSTINGER_API_TOKEN` | hPanel → Account → API. Needs website + files access. |
 
-Prefer an SFTP user scoped to the site directory over the primary account. The workflow verifies all five secrets are present before it starts, mirrors with `--delete` so the remote matches the archive exactly, and uses a single `tar.gz` transfer rather than hundreds of small round-trips.
+The account username and domain are not secrets; they sit in the workflow's `env` block.
 
-After upload it runs a post-deploy smoke test — all seven routes, the RSC payloads, `robots.txt`, `sitemap.xml` — with cache-busters so the origin is tested rather than the CDN edge. It then asserts `/images/doctors/ethan-800w.avif` returns `Content-Type: image/avif`, which is the direct detector of a missing or broken `.htaccess`. Deploys run against a `production` environment and are serialised by a concurrency group, so two can never race.
+The workflow packages `out/` as `out.zip`, uploads it with Hostinger's TUS resumable upload, then calls the static-site-archive endpoint, which **replaces the site root** from the archive. That means files deleted from the build are also removed from production, and the uploaded `.zip` does not survive into the site root. One archive avoids hundreds of small round-trips, which is where partial uploads come from.
+
+After upload it waits for the site to answer 200 (the root is briefly unavailable while the archive is swapped in), then runs a post-deploy smoke test — all seven routes, the RSC payloads, `robots.txt`, `sitemap.xml`, and a 404 check — with cache-busters so the origin is tested rather than the CDN edge. It then asserts:
+
+- `/images/doctors/ethan-800w.avif` returns `Content-Type: image/avif` — the direct detector of a missing or broken `.htaccess`
+- `/images/*` carries `max-age=604800` and HTML carries `max-age=0`, guarding the regression described above
+
+Deploys run against a `production` environment and are serialised by a concurrency group, so two can never race.
+
+### Manual deploy without the workflow
+If the API token is not set, `npm run build` produces `out/` and it can be uploaded with any SFTP client: upload the **contents** of `out/` (not the folder) into `public_html/`. The build has already asserted the `.htaccess` is present in `out/` with its AVIF rules intact.
 
 ## CI
-`.github/workflows/ci.yml` runs on every push and PR to `main`, as five parallel jobs: **lint**, **typecheck**, **build** (including `verify-export.mjs`), **audit**, and a **guards** job that asserts `.nvmrc`, `public/.htaccess`, and the build-script wiring are actually committed.
+`.github/workflows/ci.yml` runs on every push and PR to `main`, as five parallel jobs: **lint**, **typecheck**, **build** (including `verify-export.mjs` and `verify-hosts.mjs`), **audit**, and a **guards** job that asserts `.nvmrc`, `public/.htaccess`, and the build-script wiring are actually committed.
 
 Node version is pinned in `.nvmrc` (currently 22). Use it locally too (`nvm use`) so a build that passes CI does not fail on your machine. Next 16 requires Node >= 20.9.
 

@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 # Local simulation of the `guards` job in .github/workflows/ci.yml.
-# Run with Git Bash on Windows, or bash on Linux/macOS.
+# Runs on Git Bash, WSL, Linux or macOS — it resolves its own location rather
+# than assuming a checkout path.
 set -e
-cd /c/projects/dental-clinic 2>/dev/null || cd "$(dirname "$0")/.."
+cd "$(dirname "$0")/.."
 
 echo "--- step: assert critical build inputs are tracked ---"
 for f in .nvmrc public/.htaccess public/robots.txt public/sitemap.xml; do
@@ -16,12 +17,17 @@ done
 echo "--- step: assert build scripts are wired into npm run build ---"
 scripts=$(node -p "require('./package.json').scripts.build")
 echo "  build = $scripts"
-for s in rsc-payload-fix stage-server-config verify-export; do
+# Must stay in step with the same list in ci.yml. When these diverge the
+# simulation still passes, so a newly wired guard looks unverified.
+for s in rsc-payload-fix stage-server-config verify-export verify-hosts; do
   case "$scripts" in
     *"$s"*) echo "  wired: $s" ;;
     *) echo "::error::build script not wired into npm run build: $s"; exit 1 ;;
   esac
 done
+
+echo "--- step: check declared origin matches static files ---"
+node scripts/verify-hosts.mjs
 
 echo "--- step: confirm export is non-trivial ---"
 count=$(find out -type f | wc -l)

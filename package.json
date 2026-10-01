@@ -5,7 +5,8 @@
   "license": "UNLICENSED",
   "scripts": {
     "dev": "next dev -p 5711",
-    "build": "next build && node scripts/rsc-payload-fix.mjs && node scripts/stage-server-config.mjs && node scripts/verify-export.mjs",
+    "build": "next build && node scripts/rsc-payload-fix.mjs && node scripts/stage-server-config.mjs && node scripts/verify-export.mjs && node scripts/verify-hosts.mjs",
+    "verify:hosts": "node scripts/verify-hosts.mjs",
     "build:next": "next build",
     "start": "next start -p 5711",
     "lint": "eslint .",
