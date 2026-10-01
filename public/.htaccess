@@ -37,7 +37,7 @@ AddType image/webp .webp
   </FilesMatch>
 
   # /images/* is deliberately NOT cached immutably. Those are authored
-  # filenames with no content hash (e.g. /images/doctors/ethan-800w.avif), so
+  # filenames with no content hash (e.g. /images/doctors/kwesi-mensah-800w.avif), so
   # pinning them for a year would keep replaced photography cached across every
   # browser and CDN edge. They fall through to the host's default, which is
   # correct for a file that is replaced under the same name.

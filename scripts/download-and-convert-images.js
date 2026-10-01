@@ -18,8 +18,16 @@ const TRANSFORM_DIR = path.join(IMAGES_DIR, 'transform');
 // These are known to work as of 2024
 const IMAGE_SOURCES = {
   doctors: {
-    olivia: 'https://images.unsplash.com/photo-1594824476967-48c8b964273f?w=800&h=1000&fit=crop&crop=face',
-    ethan: 'https://images.unsplash.com/photo-1622253692010-333f2da6031d?w=800&h=1000&fit=crop&crop=face',
+    // Keys are the output filenames, and must match each clinician's `slug` in
+    // src/content/accra.ts — `OptimizedImage` derives every `-400w` / `-800w` /
+    // `.webp` variant from this base, and scripts/verify-clinician-assets.mjs
+    // fails the build if they disagree.
+    //
+    // These keys were `olivia` and `ethan`, from the previous practice, and the
+    // rebrand renamed the clinicians without renaming the files. Regenerating
+    // with the old keys would have recreated the drift.
+    'ama-serwaa-boateng': 'https://images.unsplash.com/photo-1594824476967-48c8b964273f?w=800&h=1000&fit=crop&crop=face',
+    'kwesi-mensah': 'https://images.unsplash.com/photo-1622253692010-333f2da6031d?w=800&h=1000&fit=crop&crop=face',
   },
   services: {
     // Using different dental/medical photos that exist

@@ -109,7 +109,7 @@ It matters because:
 
 - `AddType image/avif .avif` / `image/webp` are **load-bearing** — without them Hostinger serves `.avif` as `text/plain`, the AVIF `<picture>` sources fail to decode, and the browser falls back.
 - The one-year `immutable` cache is scoped to `/_next/static/**` (`.js`, `.css`, `.woff2`). Those filenames are content-hash fingerprinted, so they can never go stale.
-- `/images/*` is **deliberately excluded** from that policy. Those are authored filenames with no content hash (`ethan-800w.avif`), so pinning them would keep replaced photography cached for a year. They get a 7-day TTL with `stale-while-revalidate` instead.
+- `/images/*` is **deliberately excluded** from that policy. Those are authored filenames with no content hash (`kwesi-mensah-800w.avif`), so pinning them would keep replaced photography cached for a year. They get a 7-day TTL with `stale-while-revalidate` instead.
 - HTML is set to `max-age=0, must-revalidate`, and the RSC `.txt` payloads / sitemap / robots to a 5-minute `stale-while-revalidate` window, so a redeploy is picked up quickly while the CDN still absorbs repeat traffic.
 
 > The CDN does **not** override `.htaccess`. If an asset returns a cache policy you did not write, the origin is serving a different config file — check that `public/.htaccess` is what actually reached the server. Renaming image files to defeat caching is not necessary; replacing an image under the same filename and purging the cache is enough.
@@ -149,7 +149,7 @@ The workflow packages `out/` as `out.zip`, uploads it with Hostinger's TUS resum
 
 After upload it waits for the site to answer 200 (the root is briefly unavailable while the archive is swapped in), then runs a post-deploy smoke test — all seven routes, the RSC payloads, `robots.txt`, `sitemap.xml`, and a 404 check — with cache-busters so the origin is tested rather than the CDN edge. It then asserts:
 
-- `/images/doctors/ethan-800w.avif` returns `Content-Type: image/avif` — the direct detector of a missing or broken `.htaccess`
+- `/images/doctors/kwesi-mensah-800w.avif` returns `Content-Type: image/avif` — the direct detector of a missing or broken `.htaccess`
 - `/images/*` carries `max-age=604800` and HTML carries `max-age=0`, guarding the regression described above
 
 Deploys run against a `production` environment and are serialised by a concurrency group, so two can never race.

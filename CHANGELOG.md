@@ -57,6 +57,18 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   source of truth is `public/.htaccess`.
 
 ### Changed
+- **Contact phone is now `+233 24 732 2116`.** Previously `+233 30 274 0184`.
+  The number appeared in two places — `site.phone` and a literal in
+  `bookingCta.secondary` — so replacing one left the hero and footer showing a
+  different number from the call button on the same page. `bookingCta` now
+  interpolates `site.phone.display`, leaving one declaration.
+- **Clinician portraits renamed to match their clinicians.** `olivia.*` and
+  `ethan.*` were the previous practice's filenames, still rendering behind
+  Dr. Ama Serwaa Boateng and Dr. Kwesi Mensah after the rebrand. Alt text is
+  built from `name` and `role`, so nothing looked wrong and nothing failed.
+  Now `ama-serwaa-boateng.*` and `kwesi-mensah.*`, all four variants each.
+- `image` is derived from each clinician's `slug` rather than written by hand,
+  so the filename cannot drift from the person again.
 - Deploys publish through Hostinger's static-site archive API instead of SFTP.
   Endpoint paths, HTTP methods, and the path-versus-body split were verified
   against the published OpenAPI specification rather than guessed.
@@ -65,6 +77,15 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   `.htaccess`, so a silent regression like the one above fails the deploy.
 
 ### Added
+- `scripts/verify-clinician-assets.mjs`, wired into `npm run build` and CI. It
+  asserts each clinician's four image files exist under that clinician's slug,
+  that no orphan file is left in the directory, and — the part that matters —
+  that no repository text file still references an asset path no clinician owns.
+  Renaming the portraits broke `deploy.yml`, which probes one of those assets to
+  verify the AVIF MIME type and cache headers after every deploy; without this
+  check the next deploy would have replaced the live site and then failed its own
+  verification. `src/content/site.ts` and `CHANGELOG.md` are excluded as
+  historical records. Negative-tested against 8 cases.
 - `site.url` as the single source of truth for the production origin, read by
   `metadataBase` and the enquiry form.
 - `scripts/verify-hosts.mjs`, wired into `npm run build` and into CI, which
