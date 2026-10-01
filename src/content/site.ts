@@ -28,7 +28,11 @@ export const site = {
     display: "+1 (212) 555-0184",
     tel: "+12125550184",
   },
-  email: "hello@citgroupdental.com",
+  // Deliverability: the previous value was hello@citgroupdental.com, and
+  // citgroupdental.com has no DNS record at all - no NS, no A, no MX - so every
+  // enquiry hard-bounced. cromstelit.com resolves to Titan MX (mx1/mx2.titan.email)
+  // and is the domain this site is actually served from.
+  email: "hello@cromstelit.com",
   // The canonical production origin. Code reads this rather than repeating the
   // host, so moving the site is a one-line change. The static copies in
   // public/robots.txt and public/sitemap.xml cannot import it, so

@@ -32,6 +32,11 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - The enquiry form stamped `-- Sent via citgroupdental.com` into every email
   the practice received. That domain is not the one the site is served from
   and does not resolve in DNS. It now reads the configured origin.
+- The advertised contact address was itself undeliverable. `citgroupdental.com`
+  has no NS, A or MX record, so every enquiry hard-bounced from the visitor's
+  mail server. Now `hello@cromstelit.com`, which resolves to Titan MX and is the
+  domain the site is served from. Updated in `site.ts` and in both copies of the
+  licence notice.
 - `deploy.yml` uploaded with `lftp mirror`, which transfers directories and
   cannot upload the single archive the step passed it. The step had never run,
   because its secrets were never set, so the breakage was invisible. It also
@@ -62,6 +67,8 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   fails the build when `public/robots.txt` or `public/sitemap.xml` drift from
   `site.url`. Those files cannot import it, so nothing else would catch a move:
   the site would serve fine while pointing search engines at the old host.
+  It also asserts `site.email` is on the served host or one of its parent
+  domains, which is the check that would have caught the dead address above.
 - Repository documentation: `CONTRIBUTING.md`, `SECURITY.md`, and a rewritten
   README covering branch protection, visibility, and the privacy constraints.
 - `design/accra-dental-atelier.html` — a standalone design artifact, plus
