@@ -6,7 +6,7 @@ import { Magnetic } from "@/components/motion/Magnetic";
 type CtaProps = {
   href: string;
   children: React.ReactNode;
-  variant?: "primary" | "lime" | "outline" | "cream" | "gold" | "outline-gold";
+  variant?: "primary" | "lime" | "outline" | "cream" | "gold" | "outline-ochre";
   className?: string;
   external?: boolean;
   arrow?: boolean;
@@ -14,14 +14,14 @@ type CtaProps = {
 
 const styles = {
   primary:
-    "bg-charcoal text-cream hover:bg-ink",
-  lime: "bg-lime text-ink hover:bg-limedeep",
-  outline: "border border-current text-current hover:bg-charcoal hover:text-cream",
-  cream: "bg-cream text-charcoal hover:bg-paper",
+    "bg-cocoa text-bone hover:bg-cocoa",
+  lime: "bg-ochre text-cocoa hover:bg-ochre",
+  outline: "border border-current text-current hover:bg-cocoa hover:text-bone",
+  cream: "bg-bone text-cocoa hover:bg-bone",
   // Midnight/gold pair: midnight on gold is 7.7:1, gold-deep hover 6.4:1.
-  gold: "bg-gold text-midnight hover:bg-gold-deep",
-  "outline-gold":
-    "border border-gold text-ivory hover:bg-gold hover:text-midnight",
+  gold: "bg-ochre text-cocoa hover:bg-ochre",
+  "outline-ochre":
+    "border border-ochre text-bone hover:bg-ochre hover:text-cocoa",
 };
 
 export function Cta({

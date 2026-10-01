@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
-import { site, socials } from "@/content/site";
+import { site, socials } from "@/content/accra";
 import { Nav } from "@/components/layout/Nav";
 import { Footer } from "@/components/layout/Footer";
 import { FloatingCta } from "@/components/layout/FloatingCta";
@@ -72,35 +72,38 @@ export const metadata: Metadata = {
   // static copies in public/robots.txt and public/sitemap.xml by
   // scripts/verify-hosts.mjs, so the two cannot silently diverge.
   metadataBase: new URL(site.url),
-  title: "CITGROUP Dental Studio | Dentist in Manhattan, NYC",
+  title: `${site.fullName} | Private dental studio in Osu, Accra`,
   description: site.description,
   keywords: [
-    "dentist",
-    "Manhattan dentist",
-    "NYC dentistry",
+    "dentist Accra",
+    "dental clinic Osu",
+    "Ghana dentistry",
     "cosmetic dentistry",
-    "Invisalign",
+    "clear aligners Accra",
     "teeth whitening",
     "dental implants",
   ],
   openGraph: {
-    title: "CITGROUP Dental Studio | Dentist in Manhattan, NYC",
+    title: `${site.fullName} | Private dental studio in Osu, Accra`,
     description: site.description,
     url: "/",
     siteName: site.fullName,
-    locale: "en_US",
+    // `en_GH`, not `en_US` — the previous value shipped with the old identity.
+    locale: "en_GH",
     type: "website",
   },
   twitter: {
     card: "summary",
-    title: "CITGROUP Dental Studio",
+    title: site.fullName,
     description: site.description,
   },
   icons: { icon: "/favicon.svg" },
 };
 
 export const viewport: Viewport = {
-  themeColor: "#f5f0e6",
+  // Cocoa, matching the base surface, so the browser chrome does not flash a
+  // light band before the page paints.
+  themeColor: "#14100d",
   width: "device-width",
   initialScale: 1,
 };
@@ -116,13 +119,15 @@ const jsonLd = {
   address: {
     "@type": "PostalAddress",
     streetAddress: site.address.lines[0],
-    addressLocality: "New York",
-    addressRegion: "NY",
-    postalCode: "10011",
-    addressCountry: "US",
+    addressLocality: "Accra",
+    addressRegion: "Greater Accra",
+    addressCountry: "GH",
   },
-  openingHours:
-    "Mo-Fr 08:00-19:00, Sa 09:00-15:00",
+  // Schema.org wants 24h times and this string is machine-read by search
+  // engines. It was still the previous practice's New York hours (8-7 weekdays,
+  // 9-3 Saturday) after the rebrand; the hours the site actually displays are
+  // 8-6 and 9-2. Kept in step with `hours` in content/accra.ts.
+  openingHours: "Mo-Fr 08:00-18:00, Sa 09:00-14:00",
   sameAs: socials.map((s) => s.url),
   priceRange: "$$",
 };

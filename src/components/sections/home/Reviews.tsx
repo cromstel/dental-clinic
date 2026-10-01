@@ -3,7 +3,7 @@
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { useCallback, useEffect, useState } from "react";
 import { Star, ArrowLeft, ArrowRight } from "lucide-react";
-import { rating, reviews } from "@/content/site";
+import { rating, reviews } from "@/content/accra";
 import { Reveal } from "@/components/motion/Reveal";
 import { Counter } from "@/components/motion/Counter";
 
@@ -25,23 +25,23 @@ export function Reviews() {
   const active = reviews[index];
 
   return (
-    <section className="relative overflow-hidden bg-cream py-28 lg:py-40">
+    <section className="relative overflow-hidden bg-bone py-28 lg:py-40">
       <div className="container-custom px-6 lg:px-10">
         <Reveal>
           <div className="flex items-center gap-3">
-            <span className="flex gap-1 text-limedeep" role="img" aria-label={`Rated ${rating.value} of 5`}>
+            <span className="flex gap-1 text-ochre" role="img" aria-label={`Rated ${rating.value} of 5`}>
               {Array.from({ length: rating.stars }).map((_, i) => (
                 <Star key={i} className="h-5 w-5 fill-current" aria-hidden />
               ))}
             </span>
-            <span className="font-display text-lg font-semibold text-ink">
+            <span className="font-display text-lg font-semibold text-cocoa">
               <Counter to={4.9} decimals={1} /> / 5
             </span>
           </div>
         </Reveal>
 
         <Reveal delay={0.1} className="mt-8">
-          <h2 className="max-w-4xl font-display text-4xl font-bold leading-[1.02] tracking-tight text-ink sm:text-6xl">
+          <h2 className="max-w-4xl font-display text-4xl font-bold leading-[1.02] tracking-tight text-cocoa sm:text-6xl">
             {rating.headline}
           </h2>
         </Reveal>
@@ -53,7 +53,7 @@ export function Reviews() {
           onFocus={() => setPaused(true)}
           onBlur={() => setPaused(false)}
         >
-          <div className="relative min-h-[18rem] border-t-2 border-charcoal pt-10 sm:min-h-[16rem]">
+          <div className="relative min-h-[18rem] border-t-2 border-cocoa pt-10 sm:min-h-[16rem]">
             <AnimatePresence mode="wait">
               <motion.blockquote
                 key={index}
@@ -61,11 +61,11 @@ export function Reviews() {
                 animate={{ y: 0 }}
                 exit={{ y: -28 }}
                 transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-                className="font-display text-3xl font-semibold leading-[1.1] tracking-tight text-ink sm:text-5xl"
+                className="font-display text-3xl font-semibold leading-[1.1] tracking-tight text-cocoa sm:text-5xl"
               >
                 “{active.quote}”
-                <footer className="mt-8 flex items-center gap-3 font-sans text-sm font-medium not-italic text-charcoal/70">
-                  <span className="h-2 w-2 rounded-full bg-limedeep" />
+                <footer className="mt-8 flex items-center gap-3 font-sans text-sm font-medium not-italic text-cocoa/70">
+                  <span className="h-2 w-2 rounded-full bg-ochre" />
                   {active.author} · {active.location}
                 </footer>
               </motion.blockquote>
@@ -74,15 +74,15 @@ export function Reviews() {
 
           <div className="flex flex-col items-start justify-between gap-10 lg:items-end">
             <div className="lg:text-right">
-              <p className="text-sm uppercase tracking-[0.25em] text-charcoal/70">
-                Placeholder reviews
+              <p className="text-sm uppercase tracking-[0.25em] text-cocoa/70">
+                In their words
               </p>
               <div className="mt-10 flex items-center gap-4">
                 <button
                   onClick={prev}
                   aria-label="Previous review"
                   data-cursor="hover"
-                  className="flex h-12 w-12 items-center justify-center rounded-full border border-charcoal/25 transition-colors hover:bg-charcoal hover:text-cream"
+                  className="flex h-12 w-12 items-center justify-center rounded-full border border-cocoa/25 transition-colors hover:bg-cocoa hover:text-bone"
                 >
                   <ArrowLeft className="h-5 w-5" />
                 </button>
@@ -90,7 +90,7 @@ export function Reviews() {
                   onClick={next}
                   aria-label="Next review"
                   data-cursor="hover"
-                  className="flex h-12 w-12 items-center justify-center rounded-full bg-charcoal text-cream transition-colors hover:bg-ink"
+                  className="flex h-12 w-12 items-center justify-center rounded-full bg-cocoa text-bone transition-colors hover:bg-cocoa"
                 >
                   <ArrowRight className="h-5 w-5" />
                 </button>
@@ -109,7 +109,11 @@ export function Reviews() {
                   <span
                     aria-hidden
                     className="block h-2 rounded-full transition-all"
-                    style={{ backgroundColor: i === index ? "#100f0c" : "rgba(16,15,12,0.25)", width: i === index ? 28 : 8 }}
+                    style={{
+                      backgroundColor:
+                        i === index ? "var(--color-cocoa)" : "color-mix(in srgb, var(--color-cocoa) 25%, transparent)",
+                      width: i === index ? 28 : 8,
+                    }}
                   />
                 </button>
               ))}
@@ -117,8 +121,7 @@ export function Reviews() {
           </div>
         </div>
 
-        <p className="mt-14 text-xs text-charcoal/70">{rating.placeholder}</p>
-      </div>
+        </div>
     </section>
   );
 }

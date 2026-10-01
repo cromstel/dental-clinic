@@ -3,7 +3,7 @@
 import React, { useRef, useState } from "react";
 import { motion, useReducedMotion, useScroll, useTransform } from "motion/react";
 import { ArrowRight } from "lucide-react";
-import { patientSteps } from "@/content/site";
+import { patientSteps } from "@/content/accra";
 import { cn, swatch } from "@/lib/utils";
 import { useHydrated } from "@/lib/useHydrated";
 
@@ -36,28 +36,28 @@ export function PatientJourney() {
     <>
       {/* Desktop: Horizontal scroll experience */}
       <div ref={ref} className="relative hidden h-[320vh] lg:block">
-        <div className="sticky top-0 flex h-screen flex-col justify-center overflow-hidden bg-cream">
+        <div className="sticky top-0 flex h-screen flex-col justify-center overflow-hidden bg-bone">
           <motion.div
             style={{ x }}
             className="flex w-max items-stretch gap-6 px-[8vw]"
             aria-label="The patient experience, step by step"
           >
             <div className="flex w-[32vw] min-w-[20rem] flex-col justify-center">
-              <p className="text-sm font-medium uppercase tracking-[0.3em] text-charcoal/70">
+              <p className="text-sm font-medium uppercase tracking-[0.3em] text-cocoa/70">
                 Patient Experience
               </p>
-              <h2 className="mt-4 max-w-md font-display text-5xl font-bold leading-[0.95] tracking-tight text-ink sm:text-6xl xl:text-7xl">
+              <h2 className="mt-4 max-w-md font-display text-5xl font-bold leading-[0.95] tracking-tight text-cocoa sm:text-6xl xl:text-7xl">
                 From hello to{" "}
-                <span className="text-limeleaf">smiling.</span>
+                <span className="text-ochre-ink">smiling.</span>
               </h2>
-              <p className="mt-6 max-w-xs text-charcoal/70">
+              <p className="mt-6 max-w-xs text-cocoa/70">
                 Five steps. No surprises, no upselling, no lectures.
               </p>
             </div>
             {cards}
             <div className="flex w-[24vw] min-w-[16rem] flex-col justify-center">
-              <ArrowRight className="mb-4 h-8 w-8 rotate-180 text-charcoal/30" aria-hidden />
-              <p className="max-w-[14rem] font-display text-2xl font-semibold tracking-tight text-ink">
+              <ArrowRight className="mb-4 h-8 w-8 rotate-180 text-cocoa/30" aria-hidden />
+              <p className="max-w-[14rem] font-display text-2xl font-semibold tracking-tight text-cocoa">
                 That&apos;s it. Really.
               </p>
             </div>
@@ -68,13 +68,13 @@ export function PatientJourney() {
       {/* Mobile: Horizontal carousel with snap */}
       <div className="lg:hidden">
         <div className="mb-6">
-          <p className="text-sm font-medium uppercase tracking-[0.3em] text-charcoal/70">
+          <p className="text-sm font-medium uppercase tracking-[0.3em] text-cocoa/70">
             Patient Experience
           </p>
-          <h2 className="mt-2 font-display text-4xl font-bold leading-[0.95] tracking-tight text-ink">
-            From hello to <span className="text-limeleaf">smiling.</span>
+          <h2 className="mt-2 font-display text-4xl font-bold leading-[0.95] tracking-tight text-cocoa">
+            From hello to <span className="text-ochre-ink">smiling.</span>
           </h2>
-          <p className="mt-4 text-charcoal/70">
+          <p className="mt-4 text-cocoa/70">
             Five steps. No surprises, no upselling, no lectures.
           </p>
         </div>
@@ -126,14 +126,14 @@ function MobileJourneyCarousel({ cards }: { cards: React.ReactElement[] }) {
               aria-hidden
               className={cn(
                 "block h-2 rounded-full transition-all duration-300",
-                i === activeIndex ? "bg-lime w-6" : "bg-charcoal/20 hover:bg-charcoal/40"
+                i === activeIndex ? "bg-ochre w-6" : "bg-cocoa/20 hover:bg-cocoa/40"
               )}
             />
           </button>
         ))}
       </div>
 
-      <p className="text-center text-sm text-charcoal/70 mt-2">
+      <p className="text-center text-sm text-cocoa/70 mt-2">
         Swipe to explore the journey →
       </p>
     </div>
@@ -164,10 +164,10 @@ function JourneyCard({
         swatch(color),
       )}
     >
-      <span aria-hidden className="font-display text-6xl font-bold text-ink/15 sm:text-7xl">{number}</span>
+      <span aria-hidden className="font-display text-6xl font-bold text-cocoa/15 sm:text-7xl">{number}</span>
       <div>
-        <h3 className="font-display text-3xl font-bold tracking-tight text-ink sm:text-4xl">{title}</h3>
-        <p className="mt-2 max-w-[16rem] text-charcoal/70">{copy}</p>
+        <h3 className="font-display text-3xl font-bold tracking-tight text-cocoa sm:text-4xl">{title}</h3>
+        <p className="mt-2 max-w-[16rem] text-cocoa/70">{copy}</p>
       </div>
     </motion.div>
   );

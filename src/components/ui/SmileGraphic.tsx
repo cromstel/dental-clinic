@@ -35,14 +35,14 @@ export function SmileGraphic({
         cy="30"
         r="7"
         fill="currentColor"
-        className={color === "lime" ? "text-lime" : color === "charcoal" ? "text-charcoal" : ""}
+        className={color === "lime" ? "text-ochre" : color === "charcoal" ? "text-cocoa" : ""}
       />
       <circle
         cx="92"
         cy="30"
         r="7"
         fill="currentColor"
-        className={color === "lime" ? "text-lime" : color === "charcoal" ? "text-charcoal" : ""}
+        className={color === "lime" ? "text-ochre" : color === "charcoal" ? "text-cocoa" : ""}
       />
       <motion.path
         d={`M 20 ${50 + curve} C 38 ${72 + curve * 0.4}, 82 ${72 + curve * 0.4}, 100 ${50 + curve}`}

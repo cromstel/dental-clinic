@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { motion, useReducedMotion } from "motion/react";
 import { ArrowUpRight } from "lucide-react";
-import { services } from "@/content/site";
+import { services } from "@/content/accra";
 import { swatch, cn } from "@/lib/utils";
 import { OptimizedImage } from "@/components/ui/OptimizedImage";
 
@@ -11,10 +11,10 @@ export function ServicesList() {
   const reduce = useReducedMotion();
 
   return (
-    <section className="bg-cream py-6">
+    <section className="bg-bone py-6">
       <div className="container-custom px-6 lg:px-10">
         <motion.ul
-          className="border-t border-charcoal/15"
+          className="border-t border-cocoa/15"
           initial={reduce ? undefined : "hidden"}
           whileInView={reduce ? undefined : "show"}
           viewport={{ once: true, amount: 0.1 }}
@@ -37,22 +37,22 @@ export function ServicesList() {
                   )}
                 />
 
-                <div className="relative grid grid-cols-[auto_1fr] items-center gap-x-6 gap-y-2 border-b border-charcoal/15 px-1 py-10 md:grid-cols-[5rem_1fr_auto] md:gap-x-10 md:py-14 lg:gap-x-16">
-                  <span className="hidden font-display text-sm font-semibold text-charcoal/70 tabular-nums md:block">
+                <div className="relative grid grid-cols-[auto_1fr] items-center gap-x-6 gap-y-2 border-b border-cocoa/15 px-1 py-10 md:grid-cols-[5rem_1fr_auto] md:gap-x-10 md:py-14 lg:gap-x-16">
+                  <span className="hidden font-display text-sm font-semibold text-cocoa/70 tabular-nums md:block">
                     0{i + 1}
                   </span>
 
                   <div className="flex flex-col gap-2">
-                    <h2 className="font-display text-5xl font-bold tracking-tight text-charcoal transition-colors duration-300 group-hover:text-ink sm:text-6xl lg:text-7xl">
+                    <h2 className="font-display text-5xl font-bold tracking-tight text-cocoa transition-colors duration-300 group-hover:text-cocoa sm:text-6xl lg:text-7xl">
                       {s.title}
                     </h2>
-                    <p className="max-w-lg text-charcoal/70 transition-colors duration-300 group-hover:text-charcoal/80">
+                    <p className="max-w-lg text-cocoa/70 transition-colors duration-300 group-hover:text-cocoa/80">
                       {s.description}
                     </p>
                   </div>
 
                   <div className="col-start-2 flex items-center justify-between gap-6 md:col-start-3 md:justify-start">
-                    <span className="flex h-14 w-14 items-center justify-center rounded-full border border-charcoal/25 transition-all duration-300 group-hover:rotate-45 group-hover:border-charcoal group-hover:bg-charcoal group-hover:text-cream">
+                    <span className="flex h-14 w-14 items-center justify-center rounded-full border border-cocoa/25 transition-all duration-300 group-hover:rotate-45 group-hover:border-cocoa group-hover:bg-cocoa group-hover:text-bone">
                       <ArrowUpRight className="h-6 w-6" aria-hidden />
                     </span>
                     <div className="relative h-24 w-[7.5rem] overflow-hidden rounded-2xl md:hidden">

@@ -2,7 +2,7 @@
 
 import { motion, useReducedMotion, useScroll, useTransform } from "motion/react";
 import { useRef } from "react";
-import { hero } from "@/content/site";
+import { hero } from "@/content/accra";
 import { SplitText } from "@/components/motion/SplitText";
 import { Cta } from "@/components/ui/Cta";
 import { ToothVisual } from "@/components/ui/ToothVisual";
@@ -11,17 +11,18 @@ import { SmileGraphic } from "@/components/ui/SmileGraphic";
 const EASE = [0.22, 1, 0.36, 1] as const;
 
 /**
- * CITGROUP Dental Studio — Luxury Editorial Hero.
- * Aesthetic: midnight navy & gold, editorial typography, asymmetric overlap,
- * refined staggered motion entry, luxury colour block.
+ * Accra Dental Atelier — hero.
+ * Aesthetic: cocoa-black with a single ochre block, editorial typography,
+ * asymmetric overlap, staggered motion entry. The surface is warm and dark
+ * rather than the navy-and-gold it replaced, and the grain is the only texture
+ * doing atmospheric work — there is no gradient wash behind the headline.
  *
  * Single JSX tree: the reduced-motion path is produced by dropping the entrance
  * animations and the scroll parallax, not by swapping in a second markup tree.
  * That keeps the two renders structurally and visually identical (and keeps the
  * copy from drifting between them).
  *
- * All colour comes from the --color-midnight / --color-gold / --color-ivory
- * tokens in `globals.css`, including the two radial gradients.
+ * All colour comes from the cocoa / bone / ochre tokens in `globals.css`.
  */
 export function Hero() {
   const reduce = useReducedMotion();
@@ -50,28 +51,49 @@ export function Hero() {
   return (
     <section
       ref={ref}
-      className="relative flex min-h-screen items-center overflow-hidden bg-midnight text-ivory"
+      className="relative flex min-h-screen items-center overflow-hidden bg-cocoa text-bone"
     >
-      {/* Luxury radial gradient backdrop — midnight depth with a warm gold glow */}
+      {/*
+        Backdrop. Deliberately not two coloured radial gradients, which is the
+        stock "premium" move this replaced: they read as a wash behind the
+        headline rather than as structure.
+
+        Instead a single low ochre glow sits behind the accent word, and a drawn
+        arch — the shape the hero already carries in ToothVisual — is stroked at
+        the right edge as a hairline. Both are drawn once and never animated, so
+        they cost one paint.
+      */}
       <div aria-hidden className="pointer-events-none absolute inset-0 -z-10">
         <div
-          className="absolute left-[10%] top-[20%] h-[28rem] w-[28rem] rounded-full opacity-40"
-          style={{ background: "radial-gradient(circle, var(--color-gold) 0%, transparent 70%)" }}
+          className="absolute left-[38%] top-[38%] h-[30rem] w-[30rem] -translate-x-1/2 rounded-full opacity-[0.18]"
+          style={{ background: "radial-gradient(circle, var(--color-ochre) 0%, transparent 68%)" }}
         />
-        <div
-          className="absolute right-[5%] bottom-[10%] h-[22rem] w-[22rem] rounded-full opacity-20"
-          style={{
-            background: "radial-gradient(circle, var(--color-midnight-deep) 0%, transparent 60%)",
-          }}
-        />
+        {/* Arch hairline — echoes the dental arch without repeating the visual */}
+        <svg
+          className="absolute -right-[6%] bottom-[-8%] h-[68%] w-auto text-ochre opacity-[0.13]"
+          viewBox="0 0 220 340"
+          fill="none"
+          preserveAspectRatio="xMidYMid meet"
+        >
+          <path
+            d="M110 18c-52 0-88 40-88 92v212a12 12 0 0 0 12 12h152a12 12 0 0 0 12-12V110c0-52-36-92-88-92Z"
+            stroke="currentColor"
+            strokeWidth="1"
+          />
+          <path
+            d="M110 56c-36 0-60 28-60 66v186h120V122c0-38-24-66-60-66Z"
+            stroke="currentColor"
+            strokeWidth="1"
+          />
+        </svg>
         {/* Film grain — tiled 160px texture, composited once */}
         <div className="grain-overlay absolute inset-0 opacity-[0.05] mix-blend-overlay" />
       </div>
 
-      {/* Gold decorative vertical line — draws in on load */}
+      {/* Ochre rule — draws in on load, marking the text column */}
       <motion.div
         {...enter({ opacity: 1, scaleY: 0, y: 0 }, 0.3, 1.4)}
-        className="absolute left-[max(2rem,calc((100vw-1500px)/2+1rem))] top-28 bottom-28 hidden w-[2px] origin-top bg-gold/60 lg:block"
+        className="absolute left-[max(2rem,calc((100vw-1560px)/2+1rem))] top-28 bottom-28 hidden w-[2px] origin-top bg-ochre/60 lg:block"
         aria-hidden
       />
 
@@ -83,9 +105,9 @@ export function Hero() {
         {/* Editorial caption */}
         <motion.p
           {...enter({ y: 12 }, 0.15)}
-          className="absolute -top-6 left-0 font-editorial text-xs uppercase tracking-[0.25em] text-gold"
+          className="absolute -top-6 left-0 font-editorial text-xs uppercase tracking-[0.25em] text-ochre"
         >
-          Manhattan · 142 W 21ST
+          {hero.eyebrow}
         </motion.p>
 
         {/* Main text column — asymmetric, overlapping into the visual */}
@@ -94,22 +116,22 @@ export function Hero() {
             <SplitText
               as="span"
               text={hero.titleLines[0]}
-              className="block text-ivory"
+              className="block text-bone"
               delay={0.35}
               stagger={0.055}
             />
-            <span className="mt-[-0.05em] block text-ivory">
-              <SplitText as="span" text="worth" delay={0.5} stagger={0.03} />{" "}
+            <span className="mt-[-0.05em] block text-bone">
+              <SplitText as="span" text={hero.titleLines[1]} delay={0.5} stagger={0.03} />{" "}
               <SplitText
                 as="span"
-                text={hero.smilingWord}
-                className="relative inline-block bg-gold px-3 text-midnight"
+                text={hero.accentWord}
+                className="relative inline-block bg-ochre px-3 text-ochre-ink"
                 delay={0.7}
                 stagger={0.04}
               />
             </span>
-            <span className="mt-[-0.05em] block text-ivory">
-              <SplitText as="span" text="about." delay={0.9} stagger={0.04} />
+            <span className="mt-[-0.05em] block text-bone">
+              <SplitText as="span" text={hero.titleLines[2]} delay={0.9} stagger={0.04} />
             </span>
           </h1>
 
@@ -121,7 +143,7 @@ export function Hero() {
               measured LCP sitting behind the headline stagger. */}
           <motion.p
             {...enter({ y: 20 }, 0.6)}
-            className="mt-10 max-w-md font-editorial text-xl italic leading-[1.65] text-ivory/70"
+            className="mt-10 max-w-md font-editorial text-xl italic leading-[1.65] text-bone/70"
           >
             {hero.supporting}
           </motion.p>
@@ -134,11 +156,11 @@ export function Hero() {
             <Cta href="/contact" variant="gold">
               {hero.primaryCta}
             </Cta>
-            <Cta href="/services" variant="outline-gold">
+            <Cta href="/services" variant="outline-ochre">
               {hero.secondaryCta}
             </Cta>
             <SmileGraphic
-              className="ml-1 hidden h-9 w-14 text-ivory/50 md:block"
+              className="ml-1 hidden h-9 w-14 text-bone/50 md:block"
               animated={false}
             />
           </motion.div>
@@ -151,11 +173,11 @@ export function Hero() {
                 parent that has a fixed intrinsic size (the SVG's viewBox
                 aspect ratio), so they never shift layout after paint. */}
             <div
-              className="absolute -left-6 -top-6 h-20 w-20 border-l-2 border-t-2 border-gold/50"
+              className="absolute -left-6 -top-6 h-20 w-20 border-l-2 border-t-2 border-ochre/50"
               aria-hidden
             />
             <div
-              className="absolute -bottom-4 -right-4 h-20 w-20 border-b-2 border-r-2 border-gold/50"
+              className="absolute -bottom-4 -right-4 h-20 w-20 border-b-2 border-r-2 border-ochre/50"
               aria-hidden
             />
 
@@ -183,11 +205,11 @@ export function Hero() {
           style={reduce ? undefined : { opacity: fade }}
           className="flex flex-col items-center gap-3"
         >
-          <span className="font-editorial text-[0.6rem] uppercase tracking-[0.4em] text-gold/70 [writing-mode:vertical-rl]">
+          <span className="font-editorial text-[0.6rem] uppercase tracking-[0.4em] text-ochre/70 [writing-mode:vertical-rl]">
             Scroll
           </span>
 
-          <svg width="12" height="36" viewBox="0 0 10 36" fill="none" aria-hidden className="text-gold overflow-visible">
+          <svg width="12" height="36" viewBox="0 0 10 36" fill="none" aria-hidden className="text-ochre overflow-visible">
             {/* Hairline. pathLength normalises the path to 1 so the dash maths
                 is unitless and independent of the rendered height. */}
             <motion.path
