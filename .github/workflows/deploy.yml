@@ -109,10 +109,20 @@ jobs:
           ( cd out && zip -qr "$GITHUB_WORKSPACE/$ARCHIVE" . -x '.DS_Store' '*/.DS_Store' )
           echo "archive: $(du -h "$ARCHIVE" | cut -f1) ($(stat -c%s "$ARCHIVE") bytes)"
 
+          # Take the listing once and grep the variable, never `zipinfo | grep -q`.
+          # `grep -q` exits the instant it matches, closing the pipe; `zipinfo`
+          # still writing entries takes SIGPIPE and exits 141, and `pipefail`
+          # turns that into a failed pipeline. Under `if !` that reads as "check
+          # did not pass", so a perfectly good archive is reported as missing its
+          # .htaccess. It is a race, not a certainty: it passes on a 156-entry
+          # listing and fails on a large one. This is the same bug already fixed
+          # in release.yml, reintroduced here.
+          listing=$(zipinfo -1 "$ARCHIVE")
+
           # The .htaccess must be inside the archive, not merely present in out/.
           # Without it LiteSpeed serves .avif as text/plain and every <picture>
           # falls back — the exact outage this workflow exists to prevent.
-          if ! zipinfo -1 "$ARCHIVE" | grep -qxE '(\./)?\.htaccess'; then
+          if ! printf '%s\n' "$listing" | grep -xE '(\./)?\.htaccess' > /dev/null; then
             echo "::error::.htaccess missing from archive — the deploy would break AVIF rendering"
             exit 1
           fi
@@ -120,10 +130,11 @@ jobs:
 
           # Belt and braces: the archive must not contain itself, or the upload
           # carries a payload that changes while it is being uploaded.
-          if zipinfo -1 "$ARCHIVE" | grep -qxE "(\./)?$ARCHIVE"; then
+          if printf '%s\n' "$listing" | grep -xE "(\./)?$ARCHIVE" > /dev/null; then
             echo "::error::archive contains itself"
             exit 1
           fi
+          echo "  archive does not contain itself"
 
       - uses: actions/upload-artifact@v4
         with:
@@ -173,13 +184,32 @@ jobs:
           url=$(node -p "JSON.parse(require('fs').readFileSync('upload-url.json','utf8')).url")
           auth=$(node -p "JSON.parse(require('fs').readFileSync('upload-url.json','utf8')).auth_key")
           rest=$(node -p "JSON.parse(require('fs').readFileSync('upload-url.json','utf8')).rest_auth_key")
+          rm -f upload-url.json
 
-          # These are short-lived credentials scoped to this upload. Keep them out
-          # of the log and the job summary, and remove the file that holds them.
+          # The upload destination comes from an API response, and the next step
+          # sends both keys to it. If that URL were ever anything other than
+          # Hostinger's file store, the deploy would hand over working upload
+          # credentials to it. Constrain the destination rather than trust it.
+          # Update this if Hostinger moves its file store.
+          case "$url" in
+            https://*.hstgr.io/*|https://*.hostinger.com/*) ;;
+            *)
+              echo "::error::unexpected upload destination: ${url%%\?*}"
+              echo "  Refusing to send upload credentials to a host outside Hostinger."
+              exit 1
+              ;;
+          esac
+
+          # Register the values as secrets BEFORE they reach $GITHUB_OUTPUT.
+          # Outputs are interpolated into later steps' environments and echoed in
+          # some failure paths, and add-mask only redacts what it was told about
+          # beforehand — masking after the write leaves them visible in the log.
+          echo "::add-mask::$auth"
+          echo "::add-mask::$rest"
+
           echo "url=$url" >> "$GITHUB_OUTPUT"
           echo "auth=$auth" >> "$GITHUB_OUTPUT"
           echo "rest=$rest" >> "$GITHUB_OUTPUT"
-          rm -f upload-url.json
           echo "  upload URL issued for $HOSTINGER_DOMAIN"
 
       - name: Upload archive (TUS)
@@ -310,19 +340,55 @@ jobs:
 
       - name: Verify cache policy
         # Guards the regression that was misdiagnosed twice as CDN behaviour:
-        # images carrying a one-year immutable cache because a stale config file
+        # images carrying a year-long immutable cache because a stale config file
         # was being staged over the real one.
         run: |
-          set -euo pipefail
+          set -uo pipefail
           fail=0
-          expect() {
-            got=$(curl -sS -o /dev/null -D - --max-time 20 "$1?cb=$RANDOM" \
-              | grep -i '^cache-control:' | tail -1 | tr -d '\r')
-            echo "  $got  <- $2"
-            echo "$got" | grep -qi "$3" || fail=1
+
+          header() {
+            curl -sS -o /dev/null -D - --max-time 20 "$1?cb=$RANDOM" \
+              | grep -i '^cache-control:' | tail -1 | tr -d '\r'
           }
-          expect "$SITE_URL/images/doctors/ethan-800w.avif" "/images/* must not be immutable" "max-age=604800"
-          expect "$SITE_URL/" "HTML must revalidate" "max-age=0"
+
+          # A directive counts only when terminated by a comma or the end of the
+          # value. The previous bare-substring test also accepted
+          # "max-age=6048000" — and, more to the point, "max-age=604800,
+          # immutable", which is the exact regression this step exists to catch.
+          # It could therefore never fail on the thing it was added to detect.
+          #
+          # These use here-strings rather than `printf … | grep -q`. In a pipe
+          # under pipefail, `grep -q` exiting on first match can SIGPIPE the
+          # writer and turn a match into a non-zero pipeline. The input is a
+          # single header line, so it would never actually block, but relying
+          # on that is exactly the reasoning that hid the packaging bug.
+          check_contains() {
+            if grep -qiE -- "$3" <<< "$2"; then
+              echo "  ok       $1"
+            else
+              echo "::error::$1 — got '$2'"
+              fail=1
+            fi
+          }
+          check_absent() {
+            if grep -qiE -- "$3" <<< "$2"; then
+              echo "::error::$1 — got '$2'"
+              fail=1
+            else
+              echo "  ok       $1"
+            fi
+          }
+
+          img=$(header "$SITE_URL/images/doctors/ethan-800w.avif")
+          echo "  images: ${img:-<no Cache-Control header>}"
+          check_contains "image TTL must be exactly 604800" "$img" 'max-age=604800(,|$)'
+          check_absent   "images must never be immutable"      "$img" 'immutable'
+
+          html=$(header "$SITE_URL/")
+          echo "  html:   ${html:-<no Cache-Control header>}"
+          check_contains "HTML must revalidate immediately"    "$html" 'max-age=0(,|$)'
+          check_contains "HTML must carry must-revalidate"     "$html" 'must-revalidate'
+
           exit $fail
 
       - name: Summary
