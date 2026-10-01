@@ -1,4 +1,4 @@
-# Accra Dental Atelier — Apache/LiteSpeed config for the static export.
+# Accra Dental Clinic — Apache/LiteSpeed config for the static export.
 #
 # This file is both the source of truth AND the deployed artefact: it lives in
 # `public/`, so Next copies it into `out/` on every build and it travels inside

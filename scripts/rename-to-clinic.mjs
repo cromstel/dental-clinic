@@ -38,9 +38,21 @@ const REPLACEMENTS = [
   ["atelier", "clinic"],
 ];
 
+/**
+ * `SKIP` skips build and VCS directories, but the `startsWith(".")` test that
+ * normally accompanies it is deliberately absent.
+ *
+ * It hid `.htaccess` — the one dotfile that ships to production, and the file a
+ * non-developer is most likely to open when debugging cache or MIME behaviour.
+ * The rename reported itself clean while the archive still shipped the old name
+ * in that file's header, which is how the packaging verification caught it.
+ *
+ * `SKIP` already lists every directory that should not be scanned, so descending
+ * on dot-directories is safe. If one needs excluding, add it to `SKIP` by name.
+ */
 function walk(dir, acc = []) {
   for (const e of readdirSync(dir, { withFileTypes: true })) {
-    if (SKIP.has(e.name) || e.name.startsWith(".")) continue;
+    if (SKIP.has(e.name)) continue;
     const p = join(dir, e.name);
     if (e.isDirectory()) walk(p, acc);
     else if (TEXT.has(extname(e.name))) acc.push(p);
