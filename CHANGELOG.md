@@ -37,6 +37,10 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   mail server. Now `hello@cromstelit.com`, which resolves to Titan MX and is the
   domain the site is served from. Updated in `site.ts` and in both copies of the
   licence notice.
+- The enquiry form's email placeholder read `you@email.com`. `email.com` is a
+  real registrable domain, so the page rendered a genuine foreign address at the
+  visitor. Now `you@example.com`, on a domain reserved by RFC 2606 that can
+  never be registered.
 - `deploy.yml` uploaded with `lftp mirror`, which transfers directories and
   cannot upload the single archive the step passed it. The step had never run,
   because its secrets were never set, so the breakage was invisible. It also
@@ -69,6 +73,13 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   the site would serve fine while pointing search engines at the old host.
   It also asserts `site.email` is on the served host or one of its parent
   domains, which is the check that would have caught the dead address above.
+- `verify-hosts.mjs` now sweeps every email-shaped string in the files that
+  ship — `src/`, `public/`, and both licence notices — rather than checking
+  `site.email` alone. Addresses also hide in form placeholders, in the JSON-LD
+  built from `site.email`, and in the licence notice served at `/LICENSE`.
+  Placeholders are permitted only on TLDs reserved by RFC 2606/6761. Verified
+  against 15 cases including the suffix attack `cromstelit.com.example.net`,
+  which a naive reserved-suffix match would have allowed.
 - Repository documentation: `CONTRIBUTING.md`, `SECURITY.md`, and a rewritten
   README covering branch protection, visibility, and the privacy constraints.
 - `design/accra-dental-atelier.html` — a standalone design artifact, plus

@@ -28,10 +28,17 @@ export const site = {
     display: "+1 (212) 555-0184",
     tel: "+12125550184",
   },
-  // Deliverability: the previous value was hello@citgroupdental.com, and
-  // citgroupdental.com has no DNS record at all - no NS, no A, no MX - so every
-  // enquiry hard-bounced. cromstelit.com resolves to Titan MX (mx1/mx2.titan.email)
-  // and is the domain this site is actually served from.
+  // The practice's contact address. It must be on a domain this site is served
+  // from, which scripts/verify-hosts.mjs enforces.
+  //
+  // It was previously on the citgroupdental.com brand domain, which has no DNS
+  // record at all - no NS, no A, no MX - so every enquiry hard-bounced. The
+  // replacement resolves to Titan MX (mx1/mx2.titan.email), and is the domain
+  // this site is actually served from.
+  //
+  // Note the comments here deliberately name bare domains rather than writing a
+  // full address: the origin guard scans this file for email-shaped strings, and
+  // a complete address in a comment would read as a live one.
   email: "hello@cromstelit.com",
   // The canonical production origin. Code reads this rather than repeating the
   // host, so moving the site is a one-line change. The static copies in
