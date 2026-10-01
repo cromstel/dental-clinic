@@ -8,12 +8,12 @@ import { LocationTieout } from "@/components/sections/home/LocationTieout";
 import { BookingCta } from "@/components/sections/home/BookingCta";
 
 export const metadata: Metadata = {
-  title: "About Accra Dental Atelier | A private studio in Osu, Accra",
+  title: "About Accra Dental Clinic | A private studio in Osu, Accra",
   description:
     "A private dental studio on Boundary Road in Osu, Accra. Unhurried appointments, fixed quotes, and a plan you understand before anything begins.",
   alternates: { canonical: "/about" },
   openGraph: {
-    title: "About Accra Dental Atelier | A private studio in Osu, Accra",
+    title: "About Accra Dental Clinic | A private studio in Osu, Accra",
     description: site.description,
     url: "/about",
   },

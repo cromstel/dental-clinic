@@ -5,12 +5,12 @@ import { FaqAccordion } from "@/components/sections/faq/FaqAccordion";
 import { BookingCta } from "@/components/sections/home/BookingCta";
 
 export const metadata: Metadata = {
-  title: "Questions | Accra Dental Atelier, Osu, Accra",
+  title: "Questions | Accra Dental Clinic, Osu, Accra",
   description:
     "Answers about new patients, health insurance, emergency appointments, whitening, clear aligners, and where to find us in Osu, Accra.",
   alternates: { canonical: "/faq" },
   openGraph: {
-    title: "Questions | Accra Dental Atelier, Osu, Accra",
+    title: "Questions | Accra Dental Clinic, Osu, Accra",
     description: site.description,
     url: "/faq",
   },

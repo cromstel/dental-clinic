@@ -5,12 +5,12 @@ import { ContactForm } from "@/components/sections/contact/ContactForm";
 import { ContactDetails } from "@/components/sections/contact/ContactDetails";
 
 export const metadata: Metadata = {
-  title: "Contact & Book | Accra Dental Atelier, Osu, Accra",
+  title: "Contact & Book | Accra Dental Clinic, Osu, Accra",
   description:
-    "Request an appointment at Accra Dental Atelier in Osu, Accra. Call the studio, or send an enquiry and we will reply within a working day.",
+    "Request an appointment at Accra Dental Clinic in Osu, Accra. Call the studio, or send an enquiry and we will reply within a working day.",
   alternates: { canonical: "/contact" },
   openGraph: {
-    title: "Contact & Book | Accra Dental Atelier, Osu, Accra",
+    title: "Contact & Book | Accra Dental Clinic, Osu, Accra",
     description: site.description,
     url: "/contact",
   },

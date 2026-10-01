@@ -11,7 +11,7 @@ import { SmileGraphic } from "@/components/ui/SmileGraphic";
 const EASE = [0.22, 1, 0.36, 1] as const;
 
 /**
- * Accra Dental Atelier — hero.
+ * Accra Dental Clinic — hero.
  * Aesthetic: cocoa-black with a single ochre block, editorial typography,
  * asymmetric overlap, staggered motion entry. The surface is warm and dark
  * rather than the navy-and-gold it replaced, and the grain is the only texture
