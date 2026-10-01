@@ -29,26 +29,39 @@ import { join } from "node:path";
 const root = process.cwd();
 
 /**
- * Read `site.url` out of the content module without importing it.
+ * Read `url` and `email` out of the content module without importing it.
  *
  * `src/content/site.ts` is TypeScript and pulls in `./types`, so it cannot be
- * imported by a plain Node script. Parsing the one property is deliberate: this
+ * imported by a plain Node script. Parsing the properties is deliberate: this
  * check runs *before* typecheck in some paths, and it must not fail for reasons
  * unrelated to the thing it is checking.
  */
-function readDeclaredOrigin() {
+function readSiteProperties() {
   const file = join(root, "src", "content", "site.ts");
   const text = readFileSync(file, "utf8");
-  // Anchored and quote-delimited so it cannot match the comment above the
-  // property or a similarly named key.
-  const match = text.match(/^[ \t]*url:[ \t]*"(https?:\/\/[^"]+)"/m);
-  if (!match) {
-    console.error("verify-hosts: could not find a `url: \"https://…\"` property in src/content/site.ts.");
-    console.error("  site.url is the single source of truth for the production origin.");
-    console.error("  Add it back — other checks depend on it existing.");
-    process.exit(1);
-  }
-  return match[1].replace(/\/+$/, "");
+  // Anchored and quote-delimited so a match cannot come from the explanatory
+  // comment above the property or from a similarly named key.
+  const pick = (key, pattern, hint) => {
+    const m = text.match(pattern);
+    if (!m) {
+      console.error(`verify-hosts: could not find \`${key}\` in src/content/site.ts.`);
+      console.error(`  ${hint}`);
+      process.exit(1);
+    }
+    return m[1];
+  };
+  return {
+    url: pick(
+      "url",
+      /^[ \t]*url:[ \t]*"(https?:\/\/[^"]+)"/m,
+      "site.url is the single source of truth for the production origin.",
+    ).replace(/\/+$/, ""),
+    email: pick(
+      "email",
+      /^[ \t]*email:[ \t]*"([^"]+)"/m,
+      "site.email is the contact address the enquiry form sends to.",
+    ),
+  };
 }
 
 /** Every distinct absolute origin that looks like a real site URL. */
@@ -73,8 +86,47 @@ function originsIn(text) {
   return found;
 }
 
-const declared = readDeclaredOrigin();
+const { url: declared, email: declaredEmail } = readSiteProperties();
 const failures = [];
+
+// The contact address must belong to a domain this site is served from.
+//
+// This is a policy assertion, not a deliverability test: it cannot prove mail
+// arrives, and nothing in a static export can. What it does catch is the class
+// of bug it was written for - `site.email` pointing at an unrelated domain,
+// which is exactly what shipped once. That address was
+// hello@citgroupdental.com while the site is served from
+// dental-clinic.cromstelit.com, and citgroupdental.com has no NS, A or MX record
+// at all, so every enquiry the form composed was undeliverable. The build was
+// green throughout: TypeScript is happy, the page renders, the mailto: link
+// looks fine in the source.
+//
+// A parent domain counts. The site is served from a subdomain
+// (dental-clinic.cromstelit.com) but the practice's mailbox is on the apex
+// (cromstelit.com), which is the normal arrangement. So the address must be on
+// the served host or on one of its ancestors - not merely share a substring.
+// "cromstelit.com.example.net" and "notcromstelit.com" both fail.
+//
+// If the practice later registers the brand domain and wants to use it, this
+// check will fail. That is intended - it is a decision to make deliberately,
+// and changing it should be a visible edit rather than a quiet drift.
+const servedHost = new URL(declared).host.replace(/:\d+$/, "");
+const emailDomain = declaredEmail.split("@")[1];
+if (!emailDomain) {
+  failures.push(`site.email is not an email address: ${declaredEmail}`);
+} else {
+  const mailDomain = emailDomain.toLowerCase();
+  const host = servedHost.toLowerCase();
+  const onServedDomain =
+    host === mailDomain || host.endsWith(`.${mailDomain}`);
+  if (!onServedDomain) {
+    failures.push(
+      `site.email points at a domain the site is not served from.\n` +
+        `      email:     ${declaredEmail}\n` +
+        `      served as: ${servedHost}`,
+    );
+  }
+}
 
 const targets = [
   { path: join("public", "robots.txt"), label: "public/robots.txt" },
@@ -141,5 +193,6 @@ if (failures.length) {
 }
 
 console.log(
-  `verify-hosts: ${declared} consistent across public/robots.txt and public/sitemap.xml (${locs.length} URLs).`,
+  `verify-hosts: ${declared} consistent across public/robots.txt and public/sitemap.xml (${locs.length} URLs);` +
+    ` contact address ${declaredEmail} is on the served domain.`,
 );
