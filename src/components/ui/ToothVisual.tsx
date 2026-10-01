@@ -66,19 +66,21 @@ export function ToothVisual({ className }: { className?: string }) {
         {/* Soft acid glow behind the tooth */}
         <div
           aria-hidden
-          className="absolute inset-0 -z-10 scale-125 rounded-full bg-lime/40 blur-3xl"
+          className="absolute inset-0 -z-10 scale-125 rounded-full bg-ochre/40 blur-3xl"
         />
 
-        <svg viewBox="0 0 200 260" className="w-full drop-shadow-[0_30px_60px_rgba(16,15,12,0.28)]">
+        <svg viewBox="0 0 200 260" className="w-full drop-shadow-[0_30px_60px_rgba(13,10,8,0.34)]">
           <defs>
+            {/* Warm bone gradient — the cream stops this replaced were tuned for
+                the old ivory page and read almost white against cocoa. */}
             <linearGradient id="toothFill" x1="0" y1="0" x2="0.2" y2="1">
-              <stop offset="0%" stopColor="#fffdf6" />
-              <stop offset="55%" stopColor="#f6eee0" />
-              <stop offset="100%" stopColor="#e9ddcb" />
+              <stop offset="0%" stopColor="#faf4ea" />
+              <stop offset="55%" stopColor="#f0e6d6" />
+              <stop offset="100%" stopColor="#ddcfb8" />
             </linearGradient>
             <radialGradient id="toothGlow" cx="0.5" cy="0.25" r="0.6">
-              <stop offset="0%" stopColor="#ffffff" stopOpacity="0.9" />
-              <stop offset="100%" stopColor="#ffffff" stopOpacity="0" />
+              <stop offset="0%" stopColor="#fffdf8" stopOpacity="0.9" />
+              <stop offset="100%" stopColor="#fffdf8" stopOpacity="0" />
             </radialGradient>
             <filter id="toothSoft" x="-40%" y="-40%" width="180%" height="180%">
               <feGaussianBlur stdDeviation="6" />
@@ -95,7 +97,7 @@ export function ToothVisual({ className }: { className?: string }) {
           />
 
           {/* main tooth */}
-          <path d={TOOTH_D} fill="url(#toothFill)" stroke="#e3d6c2" strokeWidth="2" />
+          <path d={TOOTH_D} fill="url(#toothFill)" stroke="#cdbca1" strokeWidth="2" />
 
           {/* glossy highlight */}
           <path
@@ -104,12 +106,12 @@ export function ToothVisual({ className }: { className?: string }) {
           />
 
           {/* personality: eyes + smile */}
-          <g fill="#1a1915">
+          <g fill="#0d0a08">
             <circle cx="72" cy="112" r="7.5" />
             <circle cx="128" cy="112" r="7.5" />
             <motion.path
               d="M 58 150 C 78 174, 122 174, 142 150"
-              stroke="#1a1915"
+              stroke="#0d0a08"
               strokeWidth="9"
               strokeLinecap="round"
               fill="none"
@@ -127,7 +129,7 @@ export function ToothVisual({ className }: { className?: string }) {
         {/* floating sparkles */}
         <motion.span
           aria-hidden
-          className="absolute -right-2 top-4 text-limedeep"
+          className="absolute -right-2 top-4 text-ochre"
           animate={reduce ? undefined : { rotate: [0, 20, 0], scale: [1, 1.15, 1] }}
           transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
         >

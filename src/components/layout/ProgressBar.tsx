@@ -22,8 +22,8 @@ export function ProgressBar() {
       style={{ width }}
       className={cn(
         "fixed top-0 left-0 z-[100] h-[3px] w-full",
-        "bg-lime origin-left transition-transform duration-100 ease-out",
-        "shadow-[0_2px_8px_rgba(216,255,63,0.4)]",
+        "bg-ochre origin-left transition-transform duration-100 ease-out",
+        "shadow-[0_2px_8px_rgba(224,160,44,0.45)]",
       )}
     />
   );

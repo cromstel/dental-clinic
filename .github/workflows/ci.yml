@@ -158,7 +158,7 @@ jobs:
           # Each of these fails the build on a failure mode that is otherwise
           # silent: a broken export, a host mismatch between code and the static
           # robots/sitemap, a .htaccess that lost its AVIF MIME rules.
-          for s in rsc-payload-fix stage-server-config verify-export verify-hosts; do
+          for s in rsc-payload-fix stage-server-config verify-export verify-hosts verify-contrast verify-encoding verify-visual verify-aesthetic; do
             case "$scripts" in
               *"$s"*) echo "  wired: $s" ;;
               *) echo "::error::build script not wired into npm run build: $s"; exit 1 ;;
@@ -171,5 +171,11 @@ jobs:
       #
       # It also sweeps every published email address, so an address on a foreign
       # domain fails here rather than reaching a patient-facing page.
-      - name: Check declared origin and email domains
-        run: node scripts/verify-hosts.mjs
+      #
+      # verify-contrast runs here too: it only reads globals.css, and it is the
+      # check that would catch a palette edit that breaks a text/background pair
+      # before that edit reaches a build.
+      - name: Check declared origin, email domains and palette contrast
+        run: |
+          node scripts/verify-hosts.mjs
+          node scripts/verify-contrast.mjs

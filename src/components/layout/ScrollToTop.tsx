@@ -23,7 +23,7 @@ export function ScrollToTop() {
       style={{ opacity, y, pointerEvents: "auto" }}
       className={cn(
         "fixed bottom-6 right-6 z-40 flex h-12 w-12 items-center justify-center rounded-full",
-        "bg-charcoal text-cream hover:bg-ink transition-colors duration-300",
+        "bg-cocoa text-bone hover:bg-cocoa transition-colors duration-300",
         "shadow-pop data-cursor=\"hover\"",
       )}
       aria-label="Scroll to top"

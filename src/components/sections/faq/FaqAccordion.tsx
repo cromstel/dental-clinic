@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import { faqs } from "@/content/site";
+import { faqs } from "@/content/accra";
 import { cn } from "@/lib/utils";
 
 export function FaqAccordion() {
@@ -10,7 +10,7 @@ export function FaqAccordion() {
   const [open, setOpen] = useState<number>(0);
 
   return (
-    <section className="bg-cream py-20 lg:py-28">
+    <section className="bg-bone py-20 lg:py-28">
       <div className="mx-auto max-w-3xl px-6 lg:px-10">
         <div className="space-y-3">
           {faqs.map((f, i) => {
@@ -22,7 +22,7 @@ export function FaqAccordion() {
                 key={f.question}
                 className={cn(
                   "overflow-hidden rounded-3xl border transition-colors duration-300",
-                  isOpen ? "border-charcoal/20 bg-paper" : "border-charcoal/10 bg-cream",
+                  isOpen ? "border-cocoa/20 bg-bone" : "border-cocoa/10 bg-bone",
                 )}
               >
                 <button
@@ -39,10 +39,10 @@ export function FaqAccordion() {
                   <span className="flex items-baseline gap-4">
                     {/* /35 was 2.17:1 on cream — the only genuine
                         (non-decorative) contrast failure left on the site. */}
-                    <span className="hidden font-display text-sm font-semibold text-charcoal/70 tabular-nums sm:block">
+                    <span className="hidden font-display text-sm font-semibold text-cocoa/70 tabular-nums sm:block">
                       0{i + 1}
                     </span>
-                    <span className="font-display text-xl font-semibold tracking-tight text-ink sm:text-2xl">
+                    <span className="font-display text-xl font-semibold tracking-tight text-cocoa sm:text-2xl">
                       {f.question}
                     </span>
                   </span>
@@ -51,7 +51,7 @@ export function FaqAccordion() {
                     transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
                     className={cn(
                       "flex h-10 w-10 shrink-0 items-center justify-center rounded-full border text-xl transition-colors duration-300",
-                      isOpen ? "border-charcoal bg-charcoal text-cream" : "border-charcoal/25 text-charcoal",
+                      isOpen ? "border-cocoa bg-cocoa text-bone" : "border-cocoa/25 text-cocoa",
                     )}
                     aria-hidden
                   >
@@ -70,7 +70,7 @@ export function FaqAccordion() {
                       transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
                       className="overflow-hidden"
                     >
-                      <p className="px-6 pb-7 text-charcoal/70 sm:px-8 sm:pl-[4.5rem]">
+                      <p className="px-6 pb-7 text-cocoa/70 sm:px-8 sm:pl-[4.5rem]">
                         {f.answer}
                       </p>
                     </motion.div>

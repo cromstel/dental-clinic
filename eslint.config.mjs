@@ -58,6 +58,15 @@ export default [
         URL: "readonly",
         Buffer: "readonly",
         fetch: "readonly",
+        // Web-standard globals that exist in Node 18+ and are legitimately used
+        // by the build scripts. TextDecoder in particular is how
+        // scripts/fix-encoding.mjs validates UTF-8 with { fatal: true }.
+        TextDecoder: "readonly",
+        TextEncoder: "readonly",
+        setTimeout: "readonly",
+        clearTimeout: "readonly",
+        queueMicrotask: "readonly",
+        structuredClone: "readonly",
       },
     },
     rules: {

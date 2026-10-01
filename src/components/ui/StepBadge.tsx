@@ -12,7 +12,7 @@ type StepBadgeProps = {
 export function StepBadge({ step, total, className }: StepBadgeProps) {
   return (
     <span className={cn(
-      "hidden font-display text-sm font-semibold text-charcoal/70 tabular-nums sm:block",
+      "hidden font-display text-sm font-semibold text-cocoa/70 tabular-nums sm:block",
       className
     )}>
       {step}{total && ` / ${total}`}

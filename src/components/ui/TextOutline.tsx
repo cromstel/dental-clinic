@@ -24,7 +24,7 @@ export function TextOutline({
     <SplitText
       as={as}
       text={text}
-      className={cn("block text-outline text-charcoal", className)}
+      className={cn("block text-outline text-cocoa", className)}
       delay={delay}
       stagger={stagger}
     />

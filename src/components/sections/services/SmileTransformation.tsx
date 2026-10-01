@@ -4,26 +4,26 @@ import Link from "next/link";
 import { useRef, useState, useEffect, useCallback } from "react";
 import { motion, useMotionTemplate, useMotionValue, useSpring, useReducedMotion } from "motion/react";
 import { MoveHorizontal } from "lucide-react";
-import { transformations, transformationDisclaimer } from "@/content/site";
+import { transformations, transformationDisclaimer } from "@/content/accra";
 import { cn, swatch } from "@/lib/utils";
 import { springSmileTransform } from "@/lib/motion";
 import { OptimizedImage } from "@/components/ui/OptimizedImage";
 
 export function SmileTransformation() {
   return (
-    <section className="bg-paper py-24 lg:py-32" id="results">
+    <section className="bg-bone py-24 lg:py-32" id="results">
       <div className="container-custom px-6 lg:px-10">
         <div className="flex flex-wrap items-end justify-between gap-6">
           <div>
-            <p className="text-sm font-medium uppercase tracking-[0.3em] text-charcoal/70">
+            <p className="text-sm font-medium uppercase tracking-[0.3em] text-cocoa/70">
               Smile Transformations
             </p>
-            <h2 className="mt-4 max-w-xl font-display text-5xl font-bold leading-[0.95] tracking-tight text-ink sm:text-6xl">
+            <h2 className="mt-4 max-w-xl font-display text-5xl font-bold leading-[0.95] tracking-tight text-cocoa sm:text-6xl">
               A smile upgrade,{" "}
-              <span className="text-limeleaf">in one appointment.</span>
+              <span className="text-ochre-ink">in one appointment.</span>
             </h2>
           </div>
-          <p className="max-w-sm text-charcoal/70">
+          <p className="max-w-sm text-cocoa/70">
             Slide to compare before and after. Photos shown for
             illustrative purposes.
           </p>
@@ -35,7 +35,7 @@ export function SmileTransformation() {
           ))}
         </div>
 
-        <p className="mt-6 text-sm text-charcoal/70">{transformationDisclaimer}</p>
+        <p className="mt-6 text-sm text-cocoa/70">{transformationDisclaimer}</p>
       </div>
     </section>
   );
@@ -137,9 +137,9 @@ function BeforeAfter({ t, className }: { t: (typeof transformations)[number]; cl
   return (
     <div className={cn("group", className)}>
       <Link href="/contact">
-        <h3 className="flex items-baseline justify-between gap-4 font-display text-2xl font-semibold tracking-tight text-ink sm:text-3xl">
+        <h3 className="flex items-baseline justify-between gap-4 font-display text-2xl font-semibold tracking-tight text-cocoa sm:text-3xl">
           <span>{t.label}</span>
-          <span className="text-sm font-normal text-charcoal/70">{t.detail}</span>
+          <span className="text-sm font-normal text-cocoa/70">{t.detail}</span>
         </h3>
       </Link>
 
@@ -179,7 +179,7 @@ function BeforeAfter({ t, className }: { t: (typeof transformations)[number]; cl
         aria-valuemax={100}
         aria-valuenow={Math.round(pos ?? 50)}
         aria-orientation="horizontal"
-        className={cn("relative mt-5 aspect-[4/3] w-full select-none overflow-hidden rounded-3xl bg-charcoal", className)}
+        className={cn("relative mt-5 aspect-[4/3] w-full select-none overflow-hidden rounded-3xl bg-cocoa", className)}
         style={{ touchAction: "pan-x pan-y" }}
       >
         <div className={cn("absolute inset-0", swatch(t.color))} />
@@ -206,21 +206,21 @@ function BeforeAfter({ t, className }: { t: (typeof transformations)[number]; cl
 
         <motion.div
           style={reduce ? undefined : { left: clipWidth }}
-          className="absolute inset-y-0 z-10 w-px bg-cream/90"
+          className="absolute inset-y-0 z-10 w-px bg-bone/90"
           aria-hidden
         />
         <motion.span
           style={reduce ? undefined : { left: clipWidth }}
-          className="absolute top-1/2 z-10 flex h-12 w-12 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-cream text-charcoal shadow-pop"
+          className="absolute top-1/2 z-10 flex h-12 w-12 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-bone text-cocoa shadow-pop"
           aria-hidden
         >
           <MoveHorizontal className="h-5 w-5" aria-hidden />
         </motion.span>
 
-        <span className="absolute left-4 top-4 z-10 rounded-full bg-charcoal/70 px-3 py-1 text-xs font-medium uppercase tracking-widest text-cream backdrop-blur">
+        <span className="absolute left-4 top-4 z-10 rounded-full bg-cocoa/70 px-3 py-1 text-xs font-medium uppercase tracking-widest text-bone backdrop-blur">
           Before
         </span>
-        <span className="absolute right-4 top-4 z-10 rounded-full bg-lime px-3 py-1 text-xs font-semibold uppercase tracking-widest text-ink">
+        <span className="absolute right-4 top-4 z-10 rounded-full bg-ochre px-3 py-1 text-xs font-semibold uppercase tracking-widest text-cocoa">
           After
         </span>
       </div>

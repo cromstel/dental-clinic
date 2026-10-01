@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { ChevronDown } from "lucide-react";
-import { contactForm, site } from "@/content/site";
+import { contactForm, site } from "@/content/accra";
 import { cn, toMailto } from "@/lib/utils";
 
 type Fields = {
@@ -56,18 +56,18 @@ export function ContactForm() {
   }
 
   const inputCls =
-    "w-full rounded-2xl border border-charcoal/15 bg-paper px-5 py-4 text-charcoal placeholder:text-charcoal/35 outline-none transition-colors duration-200 focus:border-charcoal/50 focus:bg-white";
+    "w-full rounded-2xl border border-cocoa/15 bg-bone px-5 py-4 text-cocoa placeholder:text-cocoa/35 outline-none transition-colors duration-200 focus:border-cocoa/50 focus:bg-white";
 
   return (
-    <form onSubmit={handleSubmit} className="rounded-[2.5rem] bg-paper p-7 sm:p-10" data-cursor="">
-      <h2 className="font-display text-3xl font-bold tracking-tight text-ink sm:text-4xl">
+    <form onSubmit={handleSubmit} className="rounded-[2.5rem] bg-bone p-7 sm:p-10" data-cursor="">
+      <h2 className="font-display text-3xl font-bold tracking-tight text-cocoa sm:text-4xl">
         {contactForm.title}
       </h2>
-      <p className="mt-3 max-w-md text-charcoal/70">{contactForm.supporting}</p>
+      <p className="mt-3 max-w-md text-cocoa/70">{contactForm.supporting}</p>
 
       <div className="mt-10 grid gap-5 sm:grid-cols-2">
         <label className="block">
-          <span className="mb-2 block text-sm font-medium text-charcoal/70">Name</span>
+          <span className="mb-2 block text-sm font-medium text-cocoa/70">Name</span>
           <input
             required
             type="text"
@@ -78,7 +78,7 @@ export function ContactForm() {
           />
         </label>
         <label className="block">
-          <span className="mb-2 block text-sm font-medium text-charcoal/70">Email</span>
+          <span className="mb-2 block text-sm font-medium text-cocoa/70">Email</span>
           <input
             required
             type="email"
@@ -89,7 +89,7 @@ export function ContactForm() {
           />
         </label>
         <label className="block sm:col-span-2">
-          <span className="mb-2 block text-sm font-medium text-charcoal/70">Phone <span className="font-normal text-charcoal/70">(optional)</span></span>
+          <span className="mb-2 block text-sm font-medium text-cocoa/70">Phone <span className="font-normal text-cocoa/70">(optional)</span></span>
           <input
             type="tel"
             value={fields.phone}
@@ -99,7 +99,7 @@ export function ContactForm() {
           />
         </label>
         <label className="block">
-          <span className="mb-2 block text-sm font-medium text-charcoal/70">What do you need?</span>
+          <span className="mb-2 block text-sm font-medium text-cocoa/70">What do you need?</span>
           <span className="relative block">
             <select
               value={fields.service}
@@ -113,13 +113,13 @@ export function ContactForm() {
               ))}
             </select>
             <ChevronDown
-              className="pointer-events-none absolute right-5 top-1/2 h-4 w-4 -translate-y-1/2 text-charcoal/50"
+              className="pointer-events-none absolute right-5 top-1/2 h-4 w-4 -translate-y-1/2 text-cocoa/50"
               aria-hidden
             />
           </span>
         </label>
         <label className="block">
-          <span className="mb-2 block text-sm font-medium text-charcoal/70">Preferred time <span className="font-normal text-charcoal/70">(optional)</span></span>
+          <span className="mb-2 block text-sm font-medium text-cocoa/70">Preferred time <span className="font-normal text-cocoa/70">(optional)</span></span>
           <input
             type="text"
             value={fields.preferred}
@@ -129,7 +129,7 @@ export function ContactForm() {
           />
         </label>
         <label className="block sm:col-span-2">
-          <span className="mb-2 block text-sm font-medium text-charcoal/70">Anything else?</span>
+          <span className="mb-2 block text-sm font-medium text-cocoa/70">Anything else?</span>
           <textarea
             rows={4}
             value={fields.message}
@@ -143,15 +143,15 @@ export function ContactForm() {
       <button
         type="submit"
         data-cursor="hover"
-        className="group mt-8 inline-flex items-center justify-center gap-2 rounded-full bg-charcoal px-9 py-4 text-sm font-semibold tracking-tight text-cream transition-colors duration-300 hover:bg-ink"
+        className="group mt-8 inline-flex items-center justify-center gap-2 rounded-full bg-cocoa px-9 py-4 text-sm font-semibold tracking-tight text-bone transition-colors duration-300 hover:bg-cocoa"
       >
         Send enquiry
         <span className="transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5">↗</span>
       </button>
 
-      <p className="mt-6 max-w-lg text-sm leading-relaxed text-charcoal/70">{contactForm.disclaimer}</p>
+      <p className="mt-6 max-w-lg text-sm leading-relaxed text-cocoa/70">{contactForm.disclaimer}</p>
 
-      <p aria-live="polite" className={cn("mt-4 text-sm font-medium text-charcoal/70 transition-opacity", sent ? "opacity-100" : "opacity-0")}>
+      <p aria-live="polite" className={cn("mt-4 text-sm font-medium text-cocoa/70 transition-opacity", sent ? "opacity-100" : "opacity-0")}>
         Opening your email app… We&apos;ll get back to you shortly.
       </p>
     </form>

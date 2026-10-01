@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { site } from "@/content/site";
+import { site } from "@/content/accra";
 import { PageHero } from "@/components/sections/shared/PageHero";
 import { PatientJourney } from "@/components/sections/about/PatientJourney";
 import { Manifesto } from "@/components/sections/about/Manifesto";
@@ -8,12 +8,12 @@ import { LocationTieout } from "@/components/sections/home/LocationTieout";
 import { BookingCta } from "@/components/sections/home/BookingCta";
 
 export const metadata: Metadata = {
-  title: "About CITGROUP Dental Studio | Dentist in Chelsea, Manhattan",
+  title: "About Accra Dental Atelier | A private studio in Osu, Accra",
   description:
-    "A modern dental studio in Manhattan. Thoughtful care, transparent pricing, digital technology, and appointments designed around real life.",
+    "A private dental studio on Boundary Road in Osu, Accra. Unhurried appointments, fixed quotes, and a plan you understand before anything begins.",
   alternates: { canonical: "/about" },
   openGraph: {
-    title: "About CITGROUP Dental Studio | Dentist in Chelsea, Manhattan",
+    title: "About Accra Dental Atelier | A private studio in Osu, Accra",
     description: site.description,
     url: "/about",
   },
@@ -26,9 +26,9 @@ export default function AboutPage() {
         eyebrow="About"
         index="05 — About"
         titleLines={["The dentist,", "redesigned."]}
-        supporting="A more relaxed studio experience in the middle of Manhattan — with the technology and expertise you'd expect."
+        supporting="A quieter kind of dentistry in Osu — with the technology and expertise you'd expect."
         accentClass="text-outline"
-        chipClass="bg-peach text-ink"
+        chipClass="bg-clay text-cocoa"
       />
       <Manifesto />
       <StatBand />

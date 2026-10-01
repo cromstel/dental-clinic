@@ -1,7 +1,7 @@
 "use client";
 
 import { motion, useReducedMotion } from "motion/react";
-import { doctors } from "@/content/site";
+import { doctors } from "@/content/accra";
 import { cn, swatch } from "@/lib/utils";
 import { OptimizedImage } from "@/components/ui/OptimizedImage";
 
@@ -9,7 +9,7 @@ export function DoctorsList() {
   const reduce = useReducedMotion();
 
   return (
-    <section className="bg-cream pb-24">
+    <section className="bg-bone pb-24">
       <div className="container-custom px-6 lg:px-10">
         <motion.div
           className="grid gap-6 lg:grid-cols-2"
@@ -39,20 +39,20 @@ export function DoctorsList() {
                   sizes="(min-width:1024px) 24vw, 92vw"
                   className="object-cover transition-transform duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-[1.04]"
                 />
-                <span className="absolute bottom-4 left-4 rounded-full bg-white/80 px-3 py-1 text-xs font-semibold text-ink backdrop-blur">
+                <span className="absolute bottom-4 left-4 rounded-full bg-white/80 px-3 py-1 text-xs font-semibold text-cocoa backdrop-blur">
                   {doc.note}
                 </span>
               </div>
 
               <div>
-                <h2 className="font-display text-4xl font-bold tracking-tight text-ink sm:text-6xl">
+                <h2 className="font-display text-4xl font-bold tracking-tight text-cocoa sm:text-6xl">
                   {doc.name}
                 </h2>
-                <p className="mt-2 text-sm font-semibold uppercase tracking-[0.25em] text-charcoal/70">
+                <p className="mt-2 text-sm font-semibold uppercase tracking-[0.25em] text-cocoa/70">
                   {doc.role}
                 </p>
 
-                <p className="mt-6 max-w-xl text-lg leading-relaxed text-charcoal/75">
+                <p className="mt-6 max-w-xl text-lg leading-relaxed text-cocoa/75">
                   {doc.bio}
                 </p>
 
@@ -60,7 +60,7 @@ export function DoctorsList() {
                   {doc.specialties.map((sp) => (
                     <li
                       key={sp}
-                      className="rounded-full border border-charcoal/20 px-3 py-1 text-sm text-charcoal/70"
+                      className="rounded-full border border-cocoa/20 px-3 py-1 text-sm text-cocoa/70"
                     >
                       {sp}
                     </li>

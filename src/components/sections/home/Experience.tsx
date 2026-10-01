@@ -8,7 +8,7 @@ import {
   useScroll,
 } from "motion/react";
 import { useRef, useState } from "react";
-import { experience, experienceTitle } from "@/content/site";
+import { experience, experienceTitle } from "@/content/accra";
 import { swatch, cn } from "@/lib/utils";
 import { easeOutExpo, springExperience } from "@/lib/motion";
 import { useHydrated } from "@/lib/useHydrated";
@@ -32,7 +32,7 @@ export function Experience() {
     return (
       <div className="py-24">
         <div className="container-custom px-6 lg:px-10">
-          <h2 className="font-display text-5xl font-bold tracking-tight text-ink sm:text-7xl">
+          <h2 className="font-display text-5xl font-bold tracking-tight text-cocoa sm:text-7xl">
             {experienceTitle}
           </h2>
           <div className="mt-16 space-y-16">
@@ -41,13 +41,13 @@ export function Experience() {
                 <p
                   className={cn(
                     "font-display text-6xl font-bold tracking-tight sm:text-8xl",
-                    p.text === "cream" ? "text-cream" : "text-charcoal",
+                    p.text === "cream" ? "text-bone" : "text-cocoa",
                   )}
                 >
                   {p.word}
                 </p>
-                <h3 className="mt-6 font-display text-2xl font-semibold text-ink">{p.headline}</h3>
-                <p className={cn("mt-3 max-w-md", p.text === "cream" ? "text-cream/80" : "text-charcoal/70")}>
+                <h3 className="mt-6 font-display text-2xl font-semibold text-cocoa">{p.headline}</h3>
+                <p className={cn("mt-3 max-w-md", p.text === "cream" ? "text-bone/80" : "text-cocoa/70")}>
                   {p.copy}
                 </p>
               </div>
@@ -84,10 +84,10 @@ export function Experience() {
             order (h2 → h3). The base heading styles are reset back to the
             small-caps treatment it always had. */}
         <div className="relative z-10 flex items-center justify-between px-6 pt-32 md:pt-36 lg:px-10">
-          <h2 className="font-sans text-sm font-medium uppercase leading-normal tracking-[0.3em] text-charcoal/70">
+          <h2 className="font-sans text-sm font-medium uppercase leading-normal tracking-[0.3em] text-cocoa/70">
             {experienceTitle}
           </h2>
-          <p className="font-display text-sm font-semibold text-charcoal/70 tabular-nums">
+          <p className="font-display text-sm font-semibold text-cocoa/70 tabular-nums">
             0{index + 1} / 0{experience.length}
           </p>
         </div>
@@ -103,7 +103,7 @@ export function Experience() {
               transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
               className={cn(
                 "px-6 text-center font-display text-[clamp(4rem,16vw,13rem)] font-bold leading-none tracking-tight",
-                active.text === "cream" ? "text-cream" : "text-charcoal",
+                active.text === "cream" ? "text-bone" : "text-cocoa",
               )}
             >
               {active.word}
@@ -122,10 +122,10 @@ export function Experience() {
                 exit={{ opacity: 0, y: -16 }}
                 transition={{ duration: 0.4, delay: 0.05 }}
               >
-                <h3 className="font-display text-2xl font-semibold tracking-tight text-ink sm:text-3xl">
+                <h3 className="font-display text-2xl font-semibold tracking-tight text-cocoa sm:text-3xl">
                   {active.headline}
                 </h3>
-                <p className={cn("mt-2", active.text === "cream" ? "text-cream/75" : "text-charcoal/70")}>
+                <p className={cn("mt-2", active.text === "cream" ? "text-bone/75" : "text-cocoa/70")}>
                   {active.copy}
                 </p>
               </motion.div>
@@ -133,10 +133,17 @@ export function Experience() {
           </div>
 
           {/* progress bar */}
-          <div className="h-[3px] w-full max-w-[16rem] overflow-hidden rounded-full bg-charcoal/15">
+          <div className="h-[3px] w-full max-w-[16rem] overflow-hidden rounded-full bg-cocoa/15">
             <motion.div
               className="h-full origin-left rounded-full bg-current"
-              style={{ scaleX: scrollYProgress, color: active.text === "cream" ? "#f5f0e6" : "#100f0c" }}
+              style={{
+                scaleX: scrollYProgress,
+                // Reads the token off the active surface rather than carrying a
+                // hard-coded hex: the `text` field names a swatch, and the swatch
+                // map in utils.ts owns the tone. A literal here would drift from
+                // the palette the moment a tone changed.
+                color: active.text === "cocoa" ? "var(--color-bone)" : "var(--color-cocoa)",
+              }}
             />
           </div>
         </div>
@@ -146,7 +153,7 @@ export function Experience() {
           aria-hidden
           className="pointer-events-none absolute inset-x-0 -bottom-16 z-0 flex justify-center"
         >
-          <span className="font-display text-[26vw] font-bold leading-none tracking-tight text-ink/5">
+          <span className="font-display text-[26vw] font-bold leading-none tracking-tight text-cocoa/5">
             {active.word}
           </span>
         </div>

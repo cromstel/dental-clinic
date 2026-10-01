@@ -12,8 +12,11 @@ export function AlignerVisual() {
   const reduce = useReducedMotion();
 
   return (
-    <div className="relative mx-auto aspect-square max-h-[560px] w-full max-w-[560px] overflow-hidden rounded-[2.5rem] bg-lavender">
-      <div aria-hidden className="absolute inset-0 bg-[radial-gradient(circle_at_70%_20%,rgba(255,255,255,0.7),transparent_60%)]" />
+    <div className="relative mx-auto aspect-square max-h-[560px] w-full max-w-[560px] overflow-hidden rounded-[2.5rem] bg-cocoa">
+      {/* Warm light from the upper right, in the palette's own bone tone rather
+          than pure white, so the trays read as glass against cocoa instead of
+          as a white blob on a coloured panel. */}
+      <div aria-hidden className="absolute inset-0 bg-[radial-gradient(circle_at_70%_20%,rgba(244,237,227,0.34),transparent_62%)]" />
 
       <div aria-hidden className="absolute inset-x-0 top-1/2 -translate-y-1/2 px-[16%]">
         <ToothRow />
@@ -30,7 +33,7 @@ export function AlignerVisual() {
             className={`absolute ${t.w} flex justify-center`}
             aria-hidden
           >
-            <div className="h-44 w-full rounded-[4rem] border-2 border-white/60 bg-white/50 shadow-[0_20px_40px_rgba(26,25,21,0.18)] backdrop-blur-md sm:h-52" />
+            <div className="h-44 w-full rounded-[4rem] border-2 border-bone/45 bg-bone/20 shadow-[0_20px_40px_rgba(13,10,8,0.34)] backdrop-blur-md sm:h-52" />
           </motion.div>
         ))}
 
@@ -39,16 +42,16 @@ export function AlignerVisual() {
           whileInView={reduce ? undefined : { opacity: 1 }}
           viewport={{ once: true }}
           transition={{ delay: 1.4, duration: 0.8 }}
-          className="absolute font-display text-lg font-semibold tracking-tight text-ink"
+          className="absolute font-display text-lg font-semibold tracking-tight text-bone/85"
         >
           nearly invisible
         </motion.p>
       </div>
 
-      <span className="absolute left-6 top-6 rounded-full bg-white/70 px-3 py-1 text-xs font-semibold uppercase tracking-widest text-ink backdrop-blur">
-        Invisalign
+      <span className="absolute left-6 top-6 rounded-full bg-ochre px-3 py-1 text-xs font-semibold uppercase tracking-widest text-ochre-ink">
+        Clear aligners
       </span>
-      <span className="absolute bottom-6 right-6 font-display text-sm font-semibold text-charcoal/70">
+      <span className="absolute bottom-6 right-6 font-display text-sm font-semibold text-cocoa/70">
         14 trays · ~9 months
       </span>
     </div>
@@ -62,7 +65,7 @@ function ToothRow() {
         <div
           key={i}
           style={{ height: h * 0.5 }}
-          className="w-[24px] aligner-ellipse bg-cream shadow-inner sm:w-[30px]"
+          className="w-[24px] aligner-ellipse bg-bone shadow-inner sm:w-[30px]"
         />
       ))}
     </div>
