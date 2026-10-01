@@ -155,7 +155,9 @@ After upload it waits for the site to answer 200 (the root is briefly unavailabl
 Deploys run against a `production` environment and are serialised by a concurrency group, so two can never race.
 
 ### Manual deploy without the workflow
-If the API token is not set, `npm run build` produces `out/` and it can be uploaded with any SFTP client: upload the **contents** of `out/` (not the folder) into `public_html/`. The build has already asserted the `.htaccess` is present in `out/` with its AVIF rules intact.
+`npm run build` produces `out/`, and the file-browser API path above packages it as `deploy/out.zip`. Either way the rule is the same: upload the **contents** to `public_html/`, not the `out` folder itself. The build has already asserted `.htaccess` is present with its AVIF rules intact, and the packaging step asserts it again inside the archive — without it every `<picture>` falls back.
+
+If the API upload returns `401` on the TUS create while the same credentials read fine, that is the host rejecting the write, not a bad token: a token that works for `GET` on `/rest/…/` but fails `POST` on `/api/tus/` is valid. Upload the archive through hPanel's File Manager instead, or check that the account's file-manager role still permits writes.
 
 ## CI
 `.github/workflows/ci.yml` runs on every push and PR to `main`, as five parallel jobs: **lint**, **typecheck**, **build** (including `verify-export.mjs` and `verify-hosts.mjs`), **audit**, and a **guards** job that asserts `.nvmrc`, `public/.htaccess`, and the build-script wiring are actually committed.
