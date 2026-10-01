@@ -1,4 +1,4 @@
-# Accra Dental Atelier
+# Accra Dental Clinic
 
 Standalone design artifact for a premium Greater Accra wellness clinic.
 Self-contained HTML, no build step, no dependencies.
@@ -10,7 +10,7 @@ deliberately, so the static export cannot pick it up — `out/` is byte-identica
 with and without it. CI does not lint it and `verify-export.mjs` does not check
 it.
 
-Open `accra-dental-atelier.html` directly in a browser.
+Open `accra-dental-clinic.html` directly in a browser.
 
 ## Direction
 

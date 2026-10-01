@@ -14,7 +14,7 @@ import type {
 } from "./types";
 
 /**
- * Accra Dental Atelier — Osu, Accra.
+ * Accra Dental Clinic — Osu, Accra.
  *
  * Rebrand of the live site from CITGROUP Dental Studio (Manhattan) to a
  * Greater Accra wellness clinic. This file is a parallel content set rather
@@ -30,8 +30,8 @@ import type {
  * adding a tone means adding it there too, not only here.
  */
 export const site = {
-  name: "ACCRA DENTAL ATELIER",
-  fullName: "Accra Dental Atelier",
+  name: "ACCRA DENTAL CLINIC",
+  fullName: "Accra Dental Clinic",
   tagline: "A private dental studio in Osu.",
   description:
     "A private dental studio in Osu, Accra. Preventive, cosmetic, restorative, aligner, whitening and implant dentistry, with unhurried appointments and transparent pricing.",
@@ -72,14 +72,14 @@ export const socials: SocialHandle[] = [
   {
     name: "Instagram",
     label: "Instagram",
-    handle: "@accradentalatelier",
-    url: "https://www.instagram.com/accradentalatelier",
+    handle: "@accradentalclinic",
+    url: "https://www.instagram.com/accradentalclinic",
   },
   {
     name: "TikTok",
     label: "TikTok",
-    handle: "@accradentalatelier",
-    url: "https://www.tiktok.com/@accradentalatelier",
+    handle: "@accradentalclinic",
+    url: "https://www.tiktok.com/@accradentalclinic",
   },
 ];
 
@@ -127,7 +127,7 @@ export const hero = {
 
 export const intro = {
   headline: "Dentistry that respects your afternoon.",
-  body: "Accra Dental Atelier is a small studio by design. We keep a tight appointment schedule so nobody is rushed, we explain what we find before we treat it, and we quote a fixed price before we begin.",
+  body: "Accra Dental Clinic is a small studio by design. We keep a tight appointment schedule so nobody is rushed, we explain what we find before we treat it, and we quote a fixed price before we begin.",
   stats: [
     { value: "1", label: "Clinician per appointment" },
     { value: "45m", label: "Standard appointment" },
@@ -420,7 +420,7 @@ export const faqs: Faq[] = [
   {
     question: "Where are you?",
     answer:
-      "Accra Dental Atelier is at 18 Boundary Road in Osu, Accra — a short walk from the Oxford Street junction.",
+      "Accra Dental Clinic is at 18 Boundary Road in Osu, Accra — a short walk from the Oxford Street junction.",
   },
 ];
 

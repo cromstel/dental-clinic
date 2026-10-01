@@ -7,12 +7,12 @@ import { Cta } from "@/components/ui/Cta";
 import { invisalign } from "@/content/accra";
 
 export const metadata: Metadata = {
-  title: "Clear Aligners in Accra | Accra Dental Atelier",
+  title: "Clear Aligners in Accra | Accra Dental Clinic",
   description:
     "Clear aligner treatment in Accra. A 3D scan instead of a mould, a simulation of the result before you commit, and aligners you remove to eat.",
   alternates: { canonical: "/invisalign" },
   openGraph: {
-    title: "Clear Aligners in Accra | Accra Dental Atelier",
+    title: "Clear Aligners in Accra | Accra Dental Clinic",
     description: site.description,
     url: "/invisalign",
   },

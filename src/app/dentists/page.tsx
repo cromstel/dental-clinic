@@ -5,12 +5,12 @@ import { DoctorsList } from "@/components/sections/dentists/DoctorsList";
 import { InsuranceBand } from "@/components/sections/services/InsuranceBand";
 
 export const metadata: Metadata = {
-  title: "Our Dentists in Osu, Accra | Accra Dental Atelier",
+  title: "Our Dentists in Osu, Accra | Accra Dental Clinic",
   description:
-    "Meet the clinicians at Accra Dental Atelier — cosmetic, restorative and implant dentistry, plus routine oral health.",
+    "Meet the clinicians at Accra Dental Clinic — cosmetic, restorative and implant dentistry, plus routine oral health.",
   alternates: { canonical: "/dentists" },
   openGraph: {
-    title: "Our Dentists in Osu, Accra | Accra Dental Atelier",
+    title: "Our Dentists in Osu, Accra | Accra Dental Clinic",
     description: site.description,
     url: "/dentists",
   },

@@ -2,7 +2,7 @@
 
 @theme {
   /*
-    Accra Dental Atelier — cocoa / bone / ochre / clay / sage.
+    Accra Dental Clinic — cocoa / bone / ochre / clay / sage.
     Deliberately not a healthcare blue. Measured ratios are documented with the
     `static` block below and enforced by scripts/verify-contrast.mjs.
   */
@@ -43,7 +43,7 @@
 }
 
 /*
-  Accra Dental Atelier — the surfaces the palette is actually rendered on.
+  Accra Dental Clinic — the surfaces the palette is actually rendered on.
 
   `static` for the same reason as the block above: a plain `@theme` only emits a
   variable once something generates a utility that references it, which leaves

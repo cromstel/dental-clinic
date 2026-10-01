@@ -78,7 +78,7 @@ for (const file of files) {
 }
 
 // 3, 4, 5: per-page checks.
-const BRAND = "Accra Dental Atelier";
+const BRAND = "Accra Dental Clinic";
 for (const file of files) {
   const html = readFileSync(file, "utf8");
   const rel = file.slice(out.length + 1);

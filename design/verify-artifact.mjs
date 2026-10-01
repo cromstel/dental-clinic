@@ -1,5 +1,5 @@
 /*
-  Static verification for design/accra-dental-atelier.html.
+  Static verification for design/accra-dental-clinic.html.
 
   Checks the things a browser would otherwise be needed for: that the file is
   well-formed enough to parse, that every aria-controls points at a real id,
@@ -17,7 +17,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const here = dirname(fileURLToPath(import.meta.url));
-const file = join(here, "accra-dental-atelier.html");
+const file = join(here, "accra-dental-clinic.html");
 const html = readFileSync(file, "utf8");
 
 const failures = [];
@@ -173,7 +173,7 @@ for (const [re, what] of banned) {
 
 /* ── 9. The artifact must not be reachable from the static export ────────
    Checked as a RECURSIVE search, not just at the root of each folder. A copy at
-   public/design/accra-dental-atelier.html passes a root-only check, but Next
+   public/design/accra-dental-clinic.html passes a root-only check, but Next
    copies all of public/ into out/ verbatim, so nested paths ship too. */
 function findUnder(dir, filename, depth = 0) {
   if (depth > 6) return [];
@@ -196,7 +196,7 @@ function findUnder(dir, filename, depth = 0) {
 
 let leaked = false;
 for (const p of ["public", "src", "out"]) {
-  const hits = findUnder(join(here, "..", p), "accra-dental-atelier.html");
+  const hits = findUnder(join(here, "..", p), "accra-dental-clinic.html");
   if (hits.length) {
     leaked = true;
     hits.forEach((h) => fail(`packaging: artifact present at ${h} and would ship`));
@@ -207,7 +207,7 @@ if (!leaked) {
 }
 
 /* ── Report ───────────────────────────────────────────────────────────── */
-console.log("verify-artifact — accra-dental-atelier.html\n");
+console.log("verify-artifact — accra-dental-clinic.html\n");
 for (const n of notes) console.log("  PASS  " + n);
 if (failures.length) {
   console.log("");

@@ -82,7 +82,7 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   which a naive reserved-suffix match would have allowed.
 - Repository documentation: `CONTRIBUTING.md`, `SECURITY.md`, and a rewritten
   README covering branch protection, visibility, and the privacy constraints.
-- `design/accra-dental-atelier.html` — a standalone design artifact, plus
+- `design/accra-dental-clinic.html` — a standalone design artifact, plus
   `design/verify-artifact.mjs` with 36 static checks. Not wired into the build.
 
 ## [1.0.0] — 2026-09-28

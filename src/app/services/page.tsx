@@ -7,12 +7,12 @@ import { WhiteningBand } from "@/components/sections/services/WhiteningBand";
 import { InsuranceBand } from "@/components/sections/services/InsuranceBand";
 
 export const metadata: Metadata = {
-  title: "Treatments in Osu, Accra | Accra Dental Atelier",
+  title: "Treatments in Osu, Accra | Accra Dental Clinic",
   description:
     "Cosmetic dentistry, clear aligners, porcelain veneers, whitening, implants, preventive and restorative care at our studio in Osu, Accra.",
   alternates: { canonical: "/services" },
   openGraph: {
-    title: "Treatments in Osu, Accra | Accra Dental Atelier",
+    title: "Treatments in Osu, Accra | Accra Dental Clinic",
     description: site.description,
     url: "/services",
   },

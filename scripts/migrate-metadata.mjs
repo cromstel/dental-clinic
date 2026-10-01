@@ -20,24 +20,24 @@ const REPLACEMENTS = [
   // Titles
   [
     "About CITGROUP Dental Studio | Dentist in Chelsea, Manhattan",
-    "About Accra Dental Atelier | A private studio in Osu, Accra",
+    "About Accra Dental Clinic | A private studio in Osu, Accra",
   ],
   [
     "Contact & Book | CITGROUP Dental Studio, Manhattan",
-    "Contact & Book | Accra Dental Atelier, Osu, Accra",
+    "Contact & Book | Accra Dental Clinic, Osu, Accra",
   ],
   [
     "Our Dentists in Manhattan, NYC | CITGROUP Dental Studio",
-    "Our Dentists in Osu, Accra | Accra Dental Atelier",
+    "Our Dentists in Osu, Accra | Accra Dental Clinic",
   ],
-  ["FAQ | CITGROUP Dental Studio, Manhattan", "Questions | Accra Dental Atelier, Osu, Accra"],
+  ["FAQ | CITGROUP Dental Studio, Manhattan", "Questions | Accra Dental Clinic, Osu, Accra"],
   [
     "Invisalign in Manhattan, NYC | CITGROUP Dental Studio",
-    "Clear Aligners in Accra | Accra Dental Atelier",
+    "Clear Aligners in Accra | Accra Dental Clinic",
   ],
   [
     "Dental Services in Manhattan, NYC | CITGROUP Dental Studio",
-    "Treatments in Osu, Accra | Accra Dental Atelier",
+    "Treatments in Osu, Accra | Accra Dental Clinic",
   ],
   // Descriptions. Each is the literal that appears in the file today — these
   // were collected from the pages themselves rather than reconstructed, because
@@ -48,7 +48,7 @@ const REPLACEMENTS = [
   ],
   [
     "Book an appointment at CITGROUP Dental Studio in Manhattan. Call, email, or send an appointment enquiry from this page.",
-    "Request an appointment at Accra Dental Atelier in Osu, Accra. Call the studio, or send an enquiry and we will reply within a working day.",
+    "Request an appointment at Accra Dental Clinic in Osu, Accra. Call the studio, or send an enquiry and we will reply within a working day.",
   ],
   [
     // The dash in this one is U+2014 in the file, but an earlier console dump
@@ -56,7 +56,7 @@ const REPLACEMENTS = [
     // Written here with the escape so the byte sequence cannot be mangled by
     // however this file gets edited or displayed.
     "Meet the dentists at CITGROUP Dental Studio in Manhattan \u2014 cosmetic, restorative, general, and implant dentistry in the heart of NYC.",
-    "Meet the clinicians at Accra Dental Atelier \u2014 cosmetic, restorative and implant dentistry, plus routine oral health.",
+    "Meet the clinicians at Accra Dental Clinic \u2014 cosmetic, restorative and implant dentistry, plus routine oral health.",
   ],
   [
     "Answers about new patients, PPO dental insurance, emergency appointments, whitening, Invisalign consultations, and where to find us in Manhattan.",
