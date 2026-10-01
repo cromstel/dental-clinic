@@ -42,10 +42,57 @@ const cssText = cssFiles.map((f) => readFileSync(f, "utf8")).join("\n");
  * So measure the markup: the document with <style> blocks removed and the RSC
  * script payloads dropped. That leaves one copy of each element.
  */
+/**
+ * Cut out the two regions that are not markup, by locating tag boundaries
+ * rather than matching them.
+ *
+ * This started as two regexes stripping `<style>…</style>` and the RSC push
+ * payloads, which is exactly the shape of a sanitiser, and CodeQL flagged it as
+ * `js/incomplete-multi-character-sanitization`. It is not one — there is no user
+ * input here and nothing is written back as HTML — but the alert was correct
+ * that the pattern is ambiguous, and a build guard that reads like a sanitiser
+ * is a liability if it is ever copied somewhere real.
+ *
+ * `indexOf` on the literal opening tag says precisely what is removed and why,
+ * and cannot be mistaken for output escaping. If a boundary is missing, fall
+ * back to the original text so a markup change surfaces as wrong measurements
+ * rather than silently emptying the string.
+ */
+function cutRegion(text, openTag, closeTag) {
+  const start = text.indexOf(openTag);
+  if (start === -1) return text;
+  const end = text.indexOf(closeTag, start + openTag.length);
+  if (end === -1) return text;
+  return text.slice(0, start) + text.slice(end + closeTag.length);
+}
+
+/**
+ * Cut the Tailwind <style> block, and the RSC flight payloads.
+ *
+ * The RSC payloads are the tricky part. There are 16 <script> tags and the
+ * flight data is not the first one, so cutting from the first `<script` to the
+ * first `</script>` removes a single tag's worth and leaves the rest — which
+ * is why an early attempt here reported 6 three-up grids against the true 1.
+ * The payload is located by its own marker instead, which is what the original
+ * regex keyed on.
+ */
 function markupOf(htmlText) {
-  return htmlText
-    .replace(/<style[\s\S]*?<\/style>/g, "")
-    .replace(/self\.__next_f\.push\([\s\S]*?\)<\/script>/g, "");
+  let out = cutRegion(htmlText, "<style", "</style>");
+
+  // Every `self.__next_f.push(` block, including its <script> wrapper.
+  const marker = "self.__next_f.push(";
+  for (;;) {
+    const push = out.indexOf(marker);
+    if (push === -1) break;
+    // Walk left to the opening <script that wraps this push.
+    const open = out.lastIndexOf("<script", push);
+    // Walk right to the </script> that closes it.
+    const close = out.indexOf("</script>", push);
+    if (open === -1 || close === -1) break;
+    out = out.slice(0, open) + out.slice(close + "</script>".length);
+  }
+
+  return out;
 }
 
 const homeRaw = readFileSync(join(out, "index.html"), "utf8");
