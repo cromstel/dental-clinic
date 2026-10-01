@@ -329,7 +329,7 @@ jobs:
         # missing, this returns text/plain and every <picture> falls back.
         run: |
           set -euo pipefail
-          url="$SITE_URL/images/doctors/ethan-800w.avif?cb=$RANDOM"
+          url="$SITE_URL/images/doctors/kwesi-mensah-800w.avif?cb=$RANDOM"
           ct=$(curl -sS -o /dev/null -w '%{content_type}' --max-time 20 "$url")
           echo "  Content-Type: $ct"
           if [ "$ct" != "image/avif" ]; then
@@ -379,7 +379,7 @@ jobs:
             fi
           }
 
-          img=$(header "$SITE_URL/images/doctors/ethan-800w.avif")
+          img=$(header "$SITE_URL/images/doctors/kwesi-mensah-800w.avif")
           echo "  images: ${img:-<no Cache-Control header>}"
           check_contains "image TTL must be exactly 604800" "$img" 'max-age=604800(,|$)'
           check_absent   "images must never be immutable"      "$img" 'immutable'

@@ -40,9 +40,19 @@ export const site = {
     lines: ["18 Boundary Road", "Osu, Accra"],
     between: "Near the Oxford Street junction",
   },
+  // `display` is what a person reads and dials by hand; `tel` is the same number
+  // in E.164. Both are declared here rather than derived, because a number
+  // formatted for a Ghanaian mobile ("+233 24 732 2116") has no mechanical
+  // relationship to "+233247322116" — a generator would get the grouping wrong
+  // in a way no test could catch, since both are technically valid.
+  //
+  // Nothing else in the codebase may spell this number out. The previous
+  // practice's number appeared twice (here and in `bookingCta.secondary`), so
+  // replacing one left the other advertising a dead line; `bookingCta` now
+  // interpolates this value.
   phone: {
-    display: "+233 30 274 0184",
-    tel: "+233302740184",
+    display: "+233 24 732 2116",
+    tel: "+233247322116",
   },
   // Deliverability: the address must be on a domain this site is served from,
   // or on a parent of it, which scripts/verify-hosts.mjs enforces. Placeholders
@@ -68,6 +78,23 @@ export const hours: HoursRow[] = [
   { days: "Sunday", hours: "Closed" },
 ];
 
+/**
+ * PLACEHOLDER HANDLES — not real accounts.
+ *
+ * These are guesses, not registrations. `@accradentalclinic` was invented when
+ * the rebrand landed and the owner has not supplied the real handles yet. Kept in
+ * place deliberately rather than removed, at the owner's instruction, so the
+ * layout, footer and structured data stay complete while the decision is pending.
+ *
+ * The risk to remember before replacing these: a live-looking handle that belongs
+ * to a stranger sends patients to someone else's account. Verify the handle is
+ * actually yours on both platforms before it goes live — do not infer ownership
+ * from the name being available.
+ *
+ * `sameAs` in the JSON-LD is built from these URLs, so a placeholder handle is
+ * also published as a claim of identity to search engines. That is the strongest
+ * argument for swapping them sooner rather than later.
+ */
 export const socials: SocialHandle[] = [
   {
     name: "Instagram",
@@ -295,7 +322,27 @@ export const whitening = {
   cta: "Ask about whitening",
 };
 
-export const doctors: Doctor[] = [
+/**
+ * Clinician portraits.
+ *
+ * `slug` is the only field that is written by hand for identity; `image` is
+ * derived from it. The path used to be a separate literal per clinician, which
+ * is precisely how the rebrand ended up shipping `olivia.avif` behind Dr. Ama
+ * and `ethan.avif` behind Dr. Kwesi — the previous practice's filenames, still
+ * rendering correctly, because alt text is built from `name` and `role`, so
+ * nothing looked wrong and nothing failed.
+ *
+ * The asset set per clinician is four files, all named from the slug:
+ *   <slug>.avif  <slug>-400w.avif  <slug>-800w.avif  <slug>-400w.webp
+ *
+ * `OptimizedImage` rebuilds the `-400w` / `-800w` / `-400w.webp` variants from
+ * whatever base it is given, so all four have to exist on disk under the slug's
+ * name. `scripts/verify-clinician-assets.mjs` checks that, which is what turns
+ * "the filename drifted" from a silent mismatch into a failed build.
+ */
+type ClinicianSeed = Omit<Doctor, "image">;
+
+const clinicianSeeds: ClinicianSeed[] = [
   {
     slug: "ama-serwaa-boateng",
     name: "Dr. Ama Serwaa Boateng",
@@ -304,7 +351,6 @@ export const doctors: Doctor[] = [
     specialties: ["Cosmetic dentistry", "Porcelain veneers", "Smile planning"],
     bio: "Ama trained in Accra and completed her restorative fellowship in London. She works almost entirely in cosmetic dentistry — veneers, bonding, and full smile planning that starts from what you actually want rather than what a template suggests.",
     note: "ask her what is actually achievable",
-    image: "/images/doctors/olivia.avif",
     color: "clay",
   },
   {
@@ -315,10 +361,14 @@ export const doctors: Doctor[] = [
     specialties: ["Implant surgery", "Restorative dentistry", "Oral health"],
     bio: "Kwesi handles implants and the restorative work that supports them, alongside routine care. He places implants with 3D-guided planning and will tell you plainly when an implant is the wrong answer.",
     note: "the person who tells you when you do not need it",
-    image: "/images/doctors/ethan.avif",
     color: "sage",
   },
 ];
+
+export const doctors: Doctor[] = clinicianSeeds.map((seed) => ({
+  ...seed,
+  image: `/images/doctors/${seed.slug}.avif`,
+}));
 
 export const patientSteps: PatientStep[] = [
   {
@@ -427,7 +477,11 @@ export const faqs: Faq[] = [
 export const bookingCta = {
   headline: "We keep a short list, on purpose.",
   primary: "Request an appointment",
-  secondary: "Call +233 30 274 0184",
+  // Interpolated, not spelled out. This was the second place the practice's
+  // phone number lived, which is why the previous number survived a partial
+  // replacement: the hero and footer showed one number and this button showed
+  // another, both in the same page. One declaration now.
+  secondary: `Call ${site.phone.display}`,
 };
 
 export const contactForm = {
