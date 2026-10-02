@@ -1,6 +1,8 @@
-# CITGROUP Dental Studio
+![Accra Dental Clinic](.github/assets/banner.svg)
 
-Premium dental clinic website for a Manhattan practice — fully static, exportable Next.js 16 build with motion-rich UI.
+# Accra Dental Clinic
+
+Premium dental clinic website for a private practice in Osu, Accra — fully static, exportable Next.js 16 build with motion-rich UI.
 
 Live at **https://dental-clinic.cromstelit.com** — a fully static Next.js export served from Hostinger shared hosting. No Node runtime, no database, no server. The site is a brochure plus a `mailto:` enquiry form; everything else is build-time.
 
@@ -97,11 +99,15 @@ These are **not** production assets. Replace before launch.
 
 - Transformation images (`public/images/transform/`) are labelled as illustrative in `site.ts` and the pair is explicitly placeholder. Before/after clinical photography may only be published with documented written patient consent specifying scope of use.
 - Doctor photos (`public/images/doctors/*.avif`) and service cards are generated placeholders.
-- Contact details in `site.ts` are partly self-declared: the phone is a reserved `555` number, and `+1 (212) 555 0184` is not a real line. `metadataBase` and the published canonical host are `dental-clinic.cromstelit.com`; if the real production domain differs, change `metadataBase` in `src/app/layout.tsx` **and** both `public/robots.txt` and `public/sitemap.xml` together — canonicals and the sitemap must not disagree.
-- The `CITGROUP` legal entity name in `LICENSE` uses the trading name from `site.ts`. Substitute the registered entity if one exists; see the owner note at the foot of `LICENSE`.
+- Contact details in `src/content/accra.ts` are owner-supplied: the phone is `+233 24 732 2116` and `hello@cromstelit.com` is confirmed receiving mail. `metadataBase` and the published canonical host are `dental-clinic.cromstelit.com`; if the production domain differs, change `metadataBase` in `src/app/layout.tsx` **and** both `public/robots.txt` and `public/sitemap.xml` together — canonicals and the sitemap must not disagree.
+- The Instagram and TikTok handles in `socials` are **placeholders**, not registered accounts. They are published as `sameAs` in the JSON-LD, so a placeholder is also a claim of identity to search engines. Verify ownership on both platforms before replacing them; do not infer ownership from the name being available.
+- The address `18 Boundary Road, Osu, Accra` is owner-supplied and has not been independently verified against a listing.
+- `LICENSE` and `public/LICENSE` still carry **CITGROUP** as the legal entity, which is not the trading name. Substitute the registered entity if one exists; see the owner note at the foot of `LICENSE`. This is the one place the old identity legitimately remains.
 
 ## Deployment
-`out/` is a complete, self-contained static site, including `.htaccess` (copied by the build from `public/`) and `LICENSE`. Deploy the **contents** of `out/` to any static host. `trailingSlash: true` means the host must serve `about/index.html` at `/about/`.
+`out/` is a complete, self-contained static site, including `.htaccess` (copied by the build from `public/`) and `LICENSE`. Deploy the **contents** of `out/` to any static host, or wrap it as an archive with `npm run package:deploy` and deploy that. `trailingSlash: true` means the host must serve `about/index.html` at `/about/`.
+
+See [Where the site lives](#where-the-site-lives) and [Manual deploy](#manual-deploy-filezilla--any-ftp-or-sftp-client) for the production path and the FTP details.
 
 The `.htaccess` is Hostinger/LiteSpeed-specific and is the one file that is easy to lose in a partial upload. It is tracked at **`public/.htaccess`**, and because it lives in `public/` Next copies it into `out/`, so a plain `out/` upload always includes it. If AVIF images render broken or fall back to WebP, that file is missing from the server.
 
@@ -300,7 +306,7 @@ Measured contrast (WCAG 2.1) — the pairs that are safe:
 **Do not** pair gold / gold-bright with ivory (2.16:1 / 1.73:1), and do not put gold-family text on the cream or paper page body (2.07:1 / 2.18:1) — use `--color-gold-ink` there.
 
 ## License
-Proprietary — © 2026 CITGROUP Dental Studio, all rights reserved. Not open source. Full text in [LICENSE](./LICENSE).
+Proprietary - © 2026 Accra Dental Clinic, all rights reserved. Not open source. Full text in [LICENSE](./LICENSE).
 
 Third-party dependencies remain under their own licenses, recorded in `package-lock.json`.
 
