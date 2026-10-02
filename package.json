@@ -12,6 +12,7 @@
     "verify:visual": "node scripts/verify-visual.mjs",
     "verify:aesthetic": "node scripts/verify-aesthetic.mjs",
     "verify:clinicians": "node scripts/verify-clinician-assets.mjs",
+    "package:deploy": "node scripts/package-deploy.mjs",
     "fix:encoding": "node scripts/fix-encoding.mjs",
     "build:next": "next build",
     "start": "next start -p 5711",
