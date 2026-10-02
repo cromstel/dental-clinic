@@ -50,7 +50,15 @@ env:
   HOSTINGER_USERNAME: u255640043
   HOSTINGER_DOMAIN: dental-clinic.cromstelit.com
   SITE_URL: https://dental-clinic.cromstelit.com
-  # Name of the archive inside public_html. Must match ARCHIVE below.
+  # Name of the archive, relative to the website root. Must match ARCHIVE below.
+  #
+  # The on-server document root is:
+  #   /home/u255640043/domains/cromstelit.com/public_html/dental-clinic
+  # Note the `dental-clinic/` subdirectory — this is a subdomain, so its root is
+  # one level below `public_html/`. Uploading to `public_html/` would put the
+  # clinic's files in the parent domain's site. The API resolves the site root
+  # from the domain, so `archive_path` stays relative and this comment is the
+  # only place the absolute path is recorded.
   ARCHIVE: out.zip
 
 # Never let two deploys run at once — a partial upload from one racing another

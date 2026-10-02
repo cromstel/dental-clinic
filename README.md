@@ -116,23 +116,73 @@ It matters because:
 
 > If you ever find `public/.htaccess` missing, do **not** recreate it from memory — it previously existed only in a local temp folder and was lost. `git log` has it.
 
-### Manual deploy (FileZilla / any SFTP client)
-1. `npm run build`
-2. Upload the **contents** of `out/` into `public_html/` (not the `out` folder itself). It now contains `.htaccess`, so there is no separate step.
-3. Expect this shape on the server:
-   ```
-   public_html/
-     .htaccess          <- copied into out/ by the build from public/.htaccess
-     index.html   404.html   favicon.svg   robots.txt   sitemap.xml
-     LICENSE             <- published alongside the site
-     _next/              <- compiled JS/CSS/fonts
-     about/ contact/ dentists/ faq/ invisalign/ services/
-     images/  _not-found/
-     *.txt               <- RSC prefetch payloads (required, leave as-is)
-   ```
-4. Append `?x=<n>` to a URL when you need to see a change immediately — the CDN serves fresh files as `DYNAMIC`.
+### Where the site lives
 
-Verify afterwards: all 7 routes 200, unknown URL shows the 404 page, `/robots.txt` and `/sitemap.xml` 200, and `/images/services/cosmetic.avif` returns `Content-Type: image/avif` (if it returns `text/plain`, `.htaccess` did not upload).
+```
+/home/u255640043/domains/cromstelit.com/public_html/dental-clinic
+```
+
+| | |
+|---|---|
+| FTP / SFTP host | `ftp.us.hostinger.com` (port 21; use explicit FTPS if offered) |
+| Username | `u255640043` — the hPanel account, **not** the domain |
+| Document root | the path above, i.e. `public_html/` **plus** the `dental-clinic/` subdirectory |
+
+> **`public_html/dental-clinic/`, not `public_html/`.** This is a subdomain, so
+> its document root is one level below the parent domain's. `cromstelit.com`
+> itself serves a different site (CromStel IT Solutions); uploading here would
+> put the clinic's files in that site's root and leave the subdomain serving
+> stale content. The API resolves the site root correctly, so the automated path
+> is unaffected — this only matters when uploading by hand.
+
+### Manual deploy (FileZilla / any FTP or SFTP client)
+
+**Easiest and safest: upload one archive and let the deploy step extract it.**
+
+1. `npm run build`
+2. Package: the build's packaging step writes `deploy/out.zip` (156 entries).
+3. FTP-upload **`deploy/out.zip`** into the document root above, as a single file.
+   Do **not** extract it yourself — the deploy call unpacks it, and unpacking by
+   hand risks a nested `out/` subdirectory.
+4. Confirm the size on the server matches the local file exactly, then run the
+   static-site-archive deploy with `archive_path: "out.zip"`. It replaces the
+   site root from the archive, which means deleted files are removed from
+   production and the `.zip` does not survive into the site root — so there is no
+   cleanup step, and nothing stale is left behind.
+5. Purge the cache (hPanel → Performance, or the cache endpoint).
+
+If you must upload the files individually instead, upload the **contents** of
+`out/` (not the `out` folder itself) into the document root. Expect this shape:
+
+```
+dental-clinic/
+  .htaccess          <- copied into out/ by the build from public/.htaccess
+  index.html   404.html   favicon.svg   robots.txt   sitemap.xml
+  LICENSE             <- published alongside the site
+  _next/              <- compiled JS/CSS/fonts
+  about/ contact/ dentists/ faq/ invisalign/ services/
+  images/  _not-found/
+  *.txt               <- RSC prefetch payloads (required, leave as-is)
+```
+
+Two things that silently go wrong when mirroring file by file:
+
+- **`.htaccess` is a dotfile** and many clients skip it. Without it LiteSpeed
+  serves `.avif` as `text/plain`, browsers refuse to decode it, and every
+  `<picture>` falls back. It presents as a caching problem and is not one.
+- **Transfer mode must be Binary.** ASCII corrupts AVIF and WebP.
+
+Append `?x=<n>` to a URL when you need to see a change immediately — the CDN
+serves fresh files as `DYNAMIC`.
+
+Verify afterwards: all 7 routes 200, unknown URL shows the 404 page, `/robots.txt`
+and `/sitemap.xml` 200, and `/images/doctors/kwesi-mensah-800w.avif` returns
+`Content-Type: image/avif` — if it returns `text/plain`, `.htaccess` did not
+upload. That single check catches both a missing dotfile and a broken one.
+
+If a URL keeps serving old content after a correct upload, that is the CDN, not
+the origin. Purge and re-check with a fresh cache-buster before suspecting the
+deploy.
 
 ### Automated deploys
 `.github/workflows/deploy.yml` publishes to Hostinger. It is **`workflow_dispatch` only, not push-triggered** — a deploy replaces production and the `.htaccess` is load-bearing, so it is a deliberate human action. Run it from the Actions tab and type `DEPLOY` to confirm.
@@ -155,9 +205,24 @@ After upload it waits for the site to answer 200 (the root is briefly unavailabl
 Deploys run against a `production` environment and are serialised by a concurrency group, so two can never race.
 
 ### Manual deploy without the workflow
-`npm run build` produces `out/`, and the file-browser API path above packages it as `deploy/out.zip`. Either way the rule is the same: upload the **contents** to `public_html/`, not the `out` folder itself. The build has already asserted `.htaccess` is present with its AVIF rules intact, and the packaging step asserts it again inside the archive — without it every `<picture>` falls back.
+`npm run build` produces `out/`, and the packaging step writes `deploy/out.zip`.
+Upload that single archive to the document root above and deploy it with
+`archive_path: "out.zip"` — one transfer, and the deploy unpacks it. If you
+upload the files individually instead, upload the **contents** of `out/` to the
+document root, not the `out` folder itself. The build has already asserted
+`.htaccess` is present with its AVIF rules intact, and the packaging step asserts
+it again inside the archive — without it every `<picture>` falls back.
 
-If the API upload returns `401` on the TUS create while the same credentials read fine, that is the host rejecting the write, not a bad token: a token that works for `GET` on `/rest/…/` but fails `POST` on `/api/tus/` is valid. Upload the archive through hPanel's File Manager instead, or check that the account's file-manager role still permits writes.
+If the TUS create returns `401` while the same credentials read fine, **suspect the
+client before the account.** This was misdiagnosed for a while as "Hostinger is
+refusing writes" — it was not; the account was fine and writes succeed. What was
+observed: `curl` and `node` run locally both authenticated for reads (`GET` on
+`/rest/…/` → `200`) and were refused for writes (`POST` on `/api/tus/` → `401`),
+while a `fetch` from a different runtime issued the same request and got `201`,
+with the file verifiable in the site root afterwards. So a `401` on write is not
+evidence of a permission problem. Check whether a different client can write,
+and confirm the write landed by listing the site root, before escalating to
+Hostinger support.
 
 ## CI
 `.github/workflows/ci.yml` runs on every push and PR to `main`, as five parallel jobs: **lint**, **typecheck**, **build** (including `verify-export.mjs` and `verify-hosts.mjs`), **audit**, and a **guards** job that asserts `.nvmrc`, `public/.htaccess`, and the build-script wiring are actually committed.
