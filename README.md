@@ -140,7 +140,9 @@ It matters because:
 **Easiest and safest: upload one archive and let the deploy step extract it.**
 
 1. `npm run build`
-2. Package: the build's packaging step writes `deploy/out.zip` (156 entries).
+2. `npm run package:deploy` — writes `deploy/out.zip` (156 entries). This is a
+   separate step: `npm run build` only produces `out/`, so the archive does not
+   exist until you ask for it.
 3. FTP-upload **`deploy/out.zip`** into the document root above, as a single file.
    Do **not** extract it yourself — the deploy call unpacks it, and unpacking by
    hand risks a nested `out/` subdirectory.
@@ -205,13 +207,15 @@ After upload it waits for the site to answer 200 (the root is briefly unavailabl
 Deploys run against a `production` environment and are serialised by a concurrency group, so two can never race.
 
 ### Manual deploy without the workflow
-`npm run build` produces `out/`, and the packaging step writes `deploy/out.zip`.
-Upload that single archive to the document root above and deploy it with
-`archive_path: "out.zip"` — one transfer, and the deploy unpacks it. If you
-upload the files individually instead, upload the **contents** of `out/` to the
-document root, not the `out` folder itself. The build has already asserted
-`.htaccess` is present with its AVIF rules intact, and the packaging step asserts
-it again inside the archive — without it every `<picture>` falls back.
+`npm run build` produces `out/`; `npm run package:deploy` wraps it as
+`deploy/out.zip`. Upload that single archive to the document root above and
+deploy it with `archive_path: "out.zip"` — one transfer, and the deploy unpacks
+it. If you upload the files individually instead, upload the **contents** of
+`out/` to the document root, not the `out` folder itself. The build has already
+asserted `.htaccess` is present with its AVIF rules intact, and the packaging
+step asserts it again inside the archive — without it every `<picture>` falls
+back, so the packaging step refuses to write an archive that lacks it rather
+than producing one that looks fine and breaks in production.
 
 If the TUS create returns `401` while the same credentials read fine, **suspect the
 client before the account.** This was misdiagnosed for a while as "Hostinger is
