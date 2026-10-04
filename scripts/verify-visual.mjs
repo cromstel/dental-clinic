@@ -131,7 +131,14 @@ for (const file of files) {
 // and a multi-line block, not just `//` and leading-`*` lines.
 {
   const src = join(process.cwd(), "src");
-  const LOCALE = /toLocale(?:String|DateString|TimeString)\(\s*["']([a-z]{2}(?:-[A-Za-z]{2,4})?)["']/g;
+  // All three quote styles. A backtick is included because `toLocaleString(`…`)` is
+  // a locale someone can write by reflex, and it is invisible twice over: the
+  // export check cannot see a locale argument at all, and this pattern originally
+  // accepted only `"` and `'`, so the build passed it. Only a backtick template
+  // with no `${…}` substitution is accepted as a literal — an interpolated one has
+  // no statically knowable locale and is not this check's business.
+  const LOCALE =
+    /toLocale(?:String|DateString|TimeString)\(\s*(?:"([a-z]{2}(?:-[A-Za-z]{2,4})?)"|'([a-z]{2}(?:-[A-Za-z]{2,4})?)'|`([a-z]{2}(?:-[A-Za-z]{2,4})?)`)/g;
 
   const walk = (dir, acc = []) => {
     for (const e of readdirSync(dir, { withFileTypes: true })) {
@@ -157,6 +164,11 @@ for (const file of files) {
    * literals to be safe would defeat it. The cost is that a retired format named
    * inside a string is reported as live — a false positive in a comment-heavy
    * file is recoverable, a missed `+1` placeholder is not.
+   *
+   * Note the tension with `LOCALE`, which matches *inside* literals: comment
+   * blanking must leave literals intact or the locale check has nothing to read,
+   * which is also why a `//` inside a string has to be recognised as not a
+   * comment. Both behaviours are required and test cases pin each of them.
    */
   function blankComments(text) {
     let out = "";
@@ -220,11 +232,13 @@ for (const file of files) {
     });
 
     // The locale pattern is whitespace-tolerant by design and therefore must run
-    // against the whole source, not a single line.
+    // against the whole source, not a single line. Exactly one of the three
+    // capture groups participates per match, depending on the quote style.
     for (const m of stripped.matchAll(LOCALE)) {
       checks++;
-      if (m[1] !== "en-GH") {
-        failures.push(`${rel}:${lineAt(m.index)}: hardcoded locale "${m[1]}" — expected "en-GH"`);
+      const locale = m[1] ?? m[2] ?? m[3];
+      if (locale !== "en-GH") {
+        failures.push(`${rel}:${lineAt(m.index)}: hardcoded locale "${locale}" — expected "en-GH"`);
       }
     }
   }
