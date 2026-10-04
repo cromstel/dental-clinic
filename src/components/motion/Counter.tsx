@@ -47,7 +47,12 @@ export function Counter({
     return () => cancelAnimationFrame(raf);
   }, [inView, reduce, to, duration]);
 
-  const formatted = val.toLocaleString("en-US", {
+  // Market locale, not `en-US`. The output happens to be identical today — en-GH
+  // and en-US share the same group and decimal separators — so this is a
+  // statement of intent rather than a visible fix. It is worth correcting
+  // because `en-US` is a leftover from the previous practice and a hardcoded
+  // locale is exactly the sort of thing that survives a rebrand unnoticed.
+  const formatted = val.toLocaleString("en-GH", {
     minimumFractionDigits: decimals,
     maximumFractionDigits: decimals,
   });

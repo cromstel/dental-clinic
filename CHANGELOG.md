@@ -25,6 +25,29 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   purge endpoint; that credential is no longer doing double duty.
 
 ### Fixed
+- **The booking form still asked for a US phone number.** The phone field's
+  placeholder read `+1 (___) ___-____` on a site for a clinic in Osu, Accra. A
+  rebrand can replace every brand string and every address and still leave this
+  behind, because it is not a brand string — nothing in a diff of brand strings
+  points at it. Now `+233 __ ___ ____`, matching the practice's own published
+  format.
+- `Counter.tsx` formatted its figures with `toLocaleString("en-US", …)`. Now
+  `en-GH`. The rendered output is identical — the two locales share group and
+  decimal separators — so no visitor sees a difference. Corrected anyway,
+  because a hardcoded foreign locale is precisely the kind of leftover that
+  survives a rebrand unnoticed.
+- `verify-visual.mjs` now asserts two things it previously did not:
+  - **No national format from the previous practice reaches the output** — a
+    `+1` phone number, a US timezone, a P.O. box. Matched against `out/`, so it
+    catches what a visitor sees rather than what a developer left in a comment.
+  - **No hardcoded foreign locale in the source.** This one has to read `src/`,
+    for two reasons: a locale argument leaves no trace in the HTML
+    (`toLocaleString("en-US", …)` runs during prerendering and the two locales
+    render identically anyway), and a format string in a component that does not
+    prerender never reaches `out/` at all. Comment-only lines are skipped so a
+    comment naming the previous practice stays allowed.
+  Six negative-test cases, including one that pins the gap the source scan
+  exists to close.
 - **`verify-hosts.mjs` was validating a file nothing imports.** It read `site.url`
   from `src/content/site.ts`, which the rebrand had left in place but which no
   module referenced. Both files happened to carry the same origin, so the check

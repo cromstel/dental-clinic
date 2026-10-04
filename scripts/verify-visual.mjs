@@ -13,9 +13,13 @@
 //   4. No stale city references (Manhattan, Chelsea, New York, NYC) in output.
 //   5. Every page renders a real <h1>.
 //   6. Structured data names the new clinic.
+//   7. No national format from the previous practice reaches the output (a `+1`
+//      placeholder, a US timezone, a P.O. box).
+//   8. No hardcoded foreign locale in the source. This one reads `src/`, not the
+//      export — see the note at the check for why.
 
 import { readFileSync, readdirSync, statSync } from "node:fs";
-import { join } from "node:path";
+import { join, relative } from "node:path";
 
 const out = join(process.cwd(), "out");
 if (!statSync(out, { throwIfNoEntry: false })) {
@@ -48,6 +52,26 @@ const RETIRED_HEX = [
 
 const RETIRED_BRAND = [/CITGROUP/i, /Manhattan/i, /Chelsea/i, /\bSoHo\b/i, /West Village/i, /\bNYC\b/i, /New York/i, /Bennett/i, /Parker/i, /citgroupdental/i];
 
+/**
+ * National formats left over from the previous practice.
+ *
+ * A rebrand that changes every brand string and every address can still leave a
+ * visitor staring at a `+1` placeholder on a Ghanaian booking form. These do not
+ * fail a build, do not look wrong in a diff of the brand strings, and are exactly
+ * the kind of detail that survives because nobody was looking for it. Found one:
+ * the phone field's placeholder had read `+1 (___) ___-____`.
+ *
+ * These are matched against `out/`, so a placeholder that never renders is not
+ * flagged — the point is to catch what a visitor actually sees, not what a
+ * developer left in a comment.
+ */
+const RETIRED_FORMATS = [
+  [/\+1\s*\(?\d{0,3}[-_\s)]/, "US phone format"],
+  [/\bP\.?O\.? Box\b/i, "US postal format"],
+  [/\bZIP code\b/i, "US postal format"],
+  [/\b(EST|EDT|PST|PDT|CST|CDT|MST|MDT)\b/, "US timezone"],
+];
+
 function htmlFiles(dir, out = []) {
   for (const e of readdirSync(dir, { withFileTypes: true })) {
     const p = join(dir, e.name);
@@ -55,6 +79,13 @@ function htmlFiles(dir, out = []) {
     else if (e.name.endsWith(".html")) out.push(p);
   }
   return out;
+}
+
+/** Split on either line ending. This project is built on Windows and the files in
+ *  the working tree are CRLF, so anchoring on `\n` alone silently matches
+ *  nothing — which has already produced one false test pass in this repo. */
+function fsReadLines(file) {
+  return readFileSync(file, "utf8").split(/\r?\n/);
 }
 
 const files = htmlFiles(out);
@@ -74,6 +105,58 @@ for (const file of files) {
   for (const h of RETIRED_HEX) {
     checks++;
     if (html.toLowerCase().includes(h)) failures.push(`${rel}: retired hex ${h} still in output`);
+  }
+  for (const [re, label] of RETIRED_FORMATS) {
+    checks++;
+    const m = html.match(re);
+    if (m) failures.push(`${rel}: ${label} still in output — "${m[0]}"`);
+  }
+}
+
+// 8: national formats and hardcoded locale, read from source.
+//
+// These two cannot be caught in `out/` alone, for different reasons:
+//
+//   - A locale argument leaves no trace in the HTML. `toLocaleString("en-US", …)`
+//     runs during prerendering and `en-US` and `en-GH` format these values
+//     identically, so the defect is invisible in the export and to a reader.
+//   - A format string in a component that does not prerender never reaches the
+//     HTML at all. Retiring this project's actual defect (the `+1` placeholder)
+//     would have been caught by the export check, but only because that
+//     component happens to be server-rendered. Checking source covers the case
+//     where the next one is not.
+//
+// Scoped to `.tsx`/`.ts` under `src/`, skipping comment-only lines, so a comment
+// explaining the previous practice stays allowed.
+{
+  const src = join(process.cwd(), "src");
+  const LOCALE = /toLocale(?:String|DateString|TimeString)\(\s*["']([a-z]{2}(?:-[A-Za-z]{2,4})?)["']/g;
+
+  const walk = (dir, acc = []) => {
+    for (const e of readdirSync(dir, { withFileTypes: true })) {
+      const p = join(dir, e.name);
+      if (e.isDirectory()) walk(p, acc);
+      else if (/\.(ts|tsx)$/.test(e.name)) acc.push(p);
+    }
+    return acc;
+  };
+
+  for (const file of walk(src)) {
+    const rel = relative(process.cwd(), file);
+    fsReadLines(file).forEach((line, i) => {
+      if (/^\s*(\*|\/\/)/.test(line)) return;
+      for (const [re, label] of RETIRED_FORMATS) {
+        checks++;
+        const m = line.match(re);
+        if (m) failures.push(`${rel}:${i + 1}: ${label} — "${m[0]}"`);
+      }
+      for (const m of line.matchAll(LOCALE)) {
+        checks++;
+        if (m[1] !== "en-GH") {
+          failures.push(`${rel}:${i + 1}: hardcoded locale "${m[1]}" — expected "en-GH"`);
+        }
+      }
+    });
   }
 }
 
@@ -124,4 +207,4 @@ if (failures.length) {
   if (unique.length > 40) console.error(`  …and ${unique.length - 40} more`);
   process.exit(1);
 }
-console.log("\nverify-visual: OK — no retired tokens, brand and structure correct.");
+console.log("\nverify-visual: OK - no retired tokens or national formats, brand and structure correct.");
