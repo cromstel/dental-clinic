@@ -127,7 +127,7 @@ for (const file of onDisk) {
  * verification, which is the worst possible moment to discover a filename.
  *
  * Scanned: any `/images/doctors/<name>` path anywhere in the tracked text files.
- * Excluded: `src/content/site.ts` and `design/`, which are historical records of
+ * Excluded: `design/` and `CHANGELOG.md`, which are historical records of
  * the previous identity rather than shipped or current configuration, plus this
  * script itself, whose doc comments name the old filenames deliberately.
  */
@@ -141,7 +141,6 @@ for (const file of onDisk) {
    */
   const SCAN_ROOT_FILES = ["README.md", "SECURITY.md", "CONTRIBUTING.md"];
   const SKIP_FILES = new Set([
-    join(root, "src", "content", "site.ts"),
     join(root, "scripts", "verify-clinician-assets.mjs"),
   ]);
 

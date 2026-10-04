@@ -70,11 +70,17 @@ const utilPattern = new RegExp(
   "g",
 );
 
-/** Files that own the palette and must not be rewritten by the codemod. */
+/**
+ * Files that own the palette and must not be rewritten by the codemod.
+ *
+ * `src/content/site.ts` used to be here because it defined the retired palette's
+ * swatch names. It has been deleted, so the entry is gone: this codemod has
+ * already been run and is kept only as a record of how the palette was migrated.
+ * A skip list naming a file that does not exist is not a skip list.
+ */
 const SKIP = new Set([
   join("src", "app", "globals.css"),
   join("src", "lib", "utils.ts"),
-  join("src", "content", "site.ts"),
 ]);
 
 function walk(dir, out = []) {

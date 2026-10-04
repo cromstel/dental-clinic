@@ -1,6 +1,6 @@
 // Cross-check the declared production origin against every static copy of it.
 //
-// `site.url` in `src/content/site.ts` is the single source of truth for code:
+// `site.url` in `src/content/accra.ts` is the single source of truth for code:
 // `metadataBase`, canonical URLs and og:url all derive from it, so a change
 // there propagates on its own.
 //
@@ -31,20 +31,32 @@ const root = process.cwd();
 /**
  * Read `url` and `email` out of the content module without importing it.
  *
- * `src/content/site.ts` is TypeScript and pulls in `./types`, so it cannot be
+ * `src/content/accra.ts` is TypeScript and pulls in `./types`, so it cannot be
  * imported by a plain Node script. Parsing the properties is deliberate: this
  * check runs *before* typecheck in some paths, and it must not fail for reasons
  * unrelated to the thing it is checking.
+ *
+ * It must be the module the application actually imports. This used to read
+ * `src/content/site.ts`, which the rebrand left in place as a record of the
+ * previous practice but which nothing imports. The two files happened to carry
+ * the same `url`, so the check passed — and would have carried on passing after
+ * a real move, because it was comparing `robots.txt` and `sitemap.xml` against a
+ * stale copy of the origin rather than the live one. Demonstrated: changing
+ * `site.url` in the module the site imports left this check reporting the old
+ * origin as "consistent" and exiting 0.
+ *
+ * A guard that validates a file nothing uses is worse than no guard, because it
+ * is believed.
  */
 function readSiteProperties() {
-  const file = join(root, "src", "content", "site.ts");
+  const file = join(root, "src", "content", "accra.ts");
   const text = readFileSync(file, "utf8");
   // Anchored and quote-delimited so a match cannot come from the explanatory
   // comment above the property or from a similarly named key.
   const pick = (key, pattern, hint) => {
     const m = text.match(pattern);
     if (!m) {
-      console.error(`verify-hosts: could not find \`${key}\` in src/content/site.ts.`);
+      console.error(`verify-hosts: could not find \`${key}\` in src/content/accra.ts.`);
       console.error(`  ${hint}`);
       process.exit(1);
     }
@@ -91,7 +103,7 @@ const failures = [];
 
 // Every email address the site publishes must belong to a domain this site is
 // served from. Checking `site.email` alone is not enough: addresses also appear
-// in form placeholders, in the JSON-LD emitted from site.ts, and in the licence
+// in form placeholders, in the JSON-LD emitted from site.email, and in the
 // notice shipped at /LICENSE. Each of those is a place a wrong domain can hide.
 //
 // This is a policy assertion, not a deliverability test: it cannot prove mail
@@ -181,15 +193,22 @@ if (!emailDomain) {
 }
 
 // Now sweep every email-shaped string in the files that actually ship, so an
-// address cannot hide outside site.ts — in a form placeholder, in the JSON-LD
-// that layout.tsx builds from site.email, or in the licence notice served at
-// /LICENSE.
+// address cannot hide outside the content module — in a form placeholder, in
+// the JSON-LD that layout.tsx builds from site.email, or in the licence notice
+// served at /LICENSE.
+//
+// `public/LICENSE` used to be listed here. It no longer exists: the licence now
+// lives only at the repository root and scripts/stage-server-config.mjs stages it
+// into the export. Leaving the stale entry would not have failed — the walker
+// skips a path that does not exist — so the swept file count would have quietly
+// fallen from 63 to 61 with nothing reporting it. A sweep list that can silently
+// shrink is not a sweep list.
 //
 // The sweep is textual and includes comments, which is deliberate: it means a
 // complete address must never be written in a comment either, because the guard
 // cannot tell an address in prose from a live one. Comments here name bare
 // domains instead.
-const SHIPPED_SOURCES = ["src", "public", "LICENSE", "public/LICENSE"];
+const SHIPPED_SOURCES = ["src", "public", "LICENSE"];
 const EMAIL_SHAPE = /[A-Za-z0-9._%+-]+@([A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)+)/g;
 const TEXT_EXT = /\.(ts|tsx|js|jsx|mjs|css|txt|xml|svg|html|md|htaccess)$|^LICENSE$/;
 
@@ -302,7 +321,7 @@ for (const loc of locs) {
 if (failures.length) {
   console.error(`verify-hosts: FAILED — ${failures.length} problem(s):`);
   for (const f of failures) console.error(`  - ${f}`);
-  console.error("  Fix the static files to match src/content/site.ts `url`, or update both.");
+  console.error("  Fix the static files to match src/content/accra.ts `url`, or update both.");
   process.exit(1);
 }
 
