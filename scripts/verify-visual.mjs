@@ -126,8 +126,9 @@ for (const file of files) {
 //     component happens to be server-rendered. Checking source covers the case
 //     where the next one is not.
 //
-// Scoped to `.tsx`/`.ts` under `src/`, skipping comment-only lines, so a comment
-// explaining the previous practice stays allowed.
+// Scoped to `.tsx`/`.ts` under `src/`. Comments are stripped first, so a comment
+// explaining the previous practice stays allowed — including a one-line `/* */`
+// and a multi-line block, not just `//` and leading-`*` lines.
 {
   const src = join(process.cwd(), "src");
   const LOCALE = /toLocale(?:String|DateString|TimeString)\(\s*["']([a-z]{2}(?:-[A-Za-z]{2,4})?)["']/g;
@@ -141,22 +142,91 @@ for (const file of files) {
     return acc;
   };
 
+  /**
+   * Blank out comment content, keeping every character position intact so line
+   * and column numbers in a report still point at the real source.
+   *
+   * Line-based comment detection was not enough, and that was found by review
+   * rather than by reading: it recognised `//` and leading `*` lines, so a
+   * standard one-line `/* was: toLocaleString("en-US") *\/` was read as live code
+   * and failed the build on a comment. Replacing the characters rather than
+   * deleting the lines is what keeps the reported position honest.
+   *
+   * String literals are deliberately NOT blanked. A format string inside a
+   * template literal is exactly what this check exists to catch, and blanking
+   * literals to be safe would defeat it. The cost is that a retired format named
+   * inside a string is reported as live — a false positive in a comment-heavy
+   * file is recoverable, a missed `+1` placeholder is not.
+   */
+  function blankComments(text) {
+    let out = "";
+    let inBlock = false;
+    for (const raw of text.split("\n")) {
+      let line = "";
+      let inStr = null; // quote char, for `//` detection inside a URL etc.
+      let i = 0;
+      // A block comment's closing */ may sit mid-line and end before code resumes.
+      if (inBlock) {
+        const close = raw.indexOf("*/");
+        if (close === -1) { out += "\n"; continue; }
+        line += " ".repeat(close + 2);
+        i = close + 2;
+        inBlock = false;
+      }
+      while (i < raw.length) {
+        const ch = raw[i];
+        const next = raw[i + 1];
+        if (!inStr && ch === "/" && next === "*") {
+          const close = raw.indexOf("*/", i + 2);
+          if (close === -1) { inBlock = true; break; }
+          line += " ".repeat(close + 2 - i);
+          i = close + 2;
+          continue;
+        }
+        if (!inStr && ch === "/" && next === "/") break; // rest of line is comment
+        if (inStr) {
+          if (ch === "\\") { line += raw.slice(i, i + 2); i += 2; continue; }
+          if (ch === inStr) inStr = null;
+        } else if (ch === '"' || ch === "'" || ch === "`") {
+          inStr = ch;
+        }
+        line += ch;
+        i++;
+      }
+      out += line + "\n";
+    }
+    return out;
+  }
+
   for (const file of walk(src)) {
     const rel = relative(process.cwd(), file);
-    fsReadLines(file).forEach((line, i) => {
-      if (/^\s*(\*|\/\/)/.test(line)) return;
+    // Matched against the whole comment-stripped source, not line by line:
+    // a formatter can put `toLocaleString(` and `"en-US"` on separate lines, and
+    // a per-line match misses it entirely.
+    const stripped = blankComments(fsReadLines(file).join("\n"));
+
+    // Line number from a character offset. The offsets come from matches against
+    // the whole stripped source, so a call split across lines is still found and
+    // still reported at the line it starts on.
+    const lineAt = (offset) => stripped.slice(0, offset).split("\n").length;
+
+    // Line-oriented patterns run per line.
+    stripped.split("\n").forEach((line, i) => {
       for (const [re, label] of RETIRED_FORMATS) {
         checks++;
         const m = line.match(re);
         if (m) failures.push(`${rel}:${i + 1}: ${label} — "${m[0]}"`);
       }
-      for (const m of line.matchAll(LOCALE)) {
-        checks++;
-        if (m[1] !== "en-GH") {
-          failures.push(`${rel}:${i + 1}: hardcoded locale "${m[1]}" — expected "en-GH"`);
-        }
-      }
     });
+
+    // The locale pattern is whitespace-tolerant by design and therefore must run
+    // against the whole source, not a single line.
+    for (const m of stripped.matchAll(LOCALE)) {
+      checks++;
+      if (m[1] !== "en-GH") {
+        failures.push(`${rel}:${lineAt(m.index)}: hardcoded locale "${m[1]}" — expected "en-GH"`);
+      }
+    }
   }
 }
 
