@@ -13,9 +13,13 @@
 //   4. No stale city references (Manhattan, Chelsea, New York, NYC) in output.
 //   5. Every page renders a real <h1>.
 //   6. Structured data names the new clinic.
+//   7. No national format from the previous practice reaches the output (a `+1`
+//      placeholder, a US timezone, a P.O. box).
+//   8. No hardcoded foreign locale in the source. This one reads `src/`, not the
+//      export — see the note at the check for why.
 
 import { readFileSync, readdirSync, statSync } from "node:fs";
-import { join } from "node:path";
+import { join, relative } from "node:path";
 
 const out = join(process.cwd(), "out");
 if (!statSync(out, { throwIfNoEntry: false })) {
@@ -48,6 +52,26 @@ const RETIRED_HEX = [
 
 const RETIRED_BRAND = [/CITGROUP/i, /Manhattan/i, /Chelsea/i, /\bSoHo\b/i, /West Village/i, /\bNYC\b/i, /New York/i, /Bennett/i, /Parker/i, /citgroupdental/i];
 
+/**
+ * National formats left over from the previous practice.
+ *
+ * A rebrand that changes every brand string and every address can still leave a
+ * visitor staring at a `+1` placeholder on a Ghanaian booking form. These do not
+ * fail a build, do not look wrong in a diff of the brand strings, and are exactly
+ * the kind of detail that survives because nobody was looking for it. Found one:
+ * the phone field's placeholder had read `+1 (___) ___-____`.
+ *
+ * These are matched against `out/`, so a placeholder that never renders is not
+ * flagged — the point is to catch what a visitor actually sees, not what a
+ * developer left in a comment.
+ */
+const RETIRED_FORMATS = [
+  [/\+1\s*\(?\d{0,3}[-_\s)]/, "US phone format"],
+  [/\bP\.?O\.? Box\b/i, "US postal format"],
+  [/\bZIP code\b/i, "US postal format"],
+  [/\b(EST|EDT|PST|PDT|CST|CDT|MST|MDT)\b/, "US timezone"],
+];
+
 function htmlFiles(dir, out = []) {
   for (const e of readdirSync(dir, { withFileTypes: true })) {
     const p = join(dir, e.name);
@@ -55,6 +79,13 @@ function htmlFiles(dir, out = []) {
     else if (e.name.endsWith(".html")) out.push(p);
   }
   return out;
+}
+
+/** Split on either line ending. This project is built on Windows and the files in
+ *  the working tree are CRLF, so anchoring on `\n` alone silently matches
+ *  nothing — which has already produced one false test pass in this repo. */
+function fsReadLines(file) {
+  return readFileSync(file, "utf8").split(/\r?\n/);
 }
 
 const files = htmlFiles(out);
@@ -74,6 +105,142 @@ for (const file of files) {
   for (const h of RETIRED_HEX) {
     checks++;
     if (html.toLowerCase().includes(h)) failures.push(`${rel}: retired hex ${h} still in output`);
+  }
+  for (const [re, label] of RETIRED_FORMATS) {
+    checks++;
+    const m = html.match(re);
+    if (m) failures.push(`${rel}: ${label} still in output — "${m[0]}"`);
+  }
+}
+
+// 8: national formats and hardcoded locale, read from source.
+//
+// These two cannot be caught in `out/` alone, for different reasons:
+//
+//   - A locale argument leaves no trace in the HTML. `toLocaleString("en-US", …)`
+//     runs during prerendering and `en-US` and `en-GH` format these values
+//     identically, so the defect is invisible in the export and to a reader.
+//   - A format string in a component that does not prerender never reaches the
+//     HTML at all. Retiring this project's actual defect (the `+1` placeholder)
+//     would have been caught by the export check, but only because that
+//     component happens to be server-rendered. Checking source covers the case
+//     where the next one is not.
+//
+// Scoped to `.tsx`/`.ts` under `src/`. Comments are stripped first, so a comment
+// explaining the previous practice stays allowed — including a one-line `/* */`
+// and a multi-line block, not just `//` and leading-`*` lines.
+{
+  const src = join(process.cwd(), "src");
+  // All three quote styles. A backtick is included because `toLocaleString(`…`)` is
+  // a locale someone can write by reflex, and it is invisible twice over: the
+  // export check cannot see a locale argument at all, and this pattern originally
+  // accepted only `"` and `'`, so the build passed it. Only a backtick template
+  // with no `${…}` substitution is accepted as a literal — an interpolated one has
+  // no statically knowable locale and is not this check's business.
+  const LOCALE =
+    /toLocale(?:String|DateString|TimeString)\(\s*(?:"([a-z]{2}(?:-[A-Za-z]{2,4})?)"|'([a-z]{2}(?:-[A-Za-z]{2,4})?)'|`([a-z]{2}(?:-[A-Za-z]{2,4})?)`)/g;
+
+  const walk = (dir, acc = []) => {
+    for (const e of readdirSync(dir, { withFileTypes: true })) {
+      const p = join(dir, e.name);
+      if (e.isDirectory()) walk(p, acc);
+      else if (/\.(ts|tsx)$/.test(e.name)) acc.push(p);
+    }
+    return acc;
+  };
+
+  /**
+   * Blank out comment content, keeping every character position intact so line
+   * and column numbers in a report still point at the real source.
+   *
+   * Line-based comment detection was not enough, and that was found by review
+   * rather than by reading: it recognised `//` and leading `*` lines, so a
+   * standard one-line `/* was: toLocaleString("en-US") *\/` was read as live code
+   * and failed the build on a comment. Replacing the characters rather than
+   * deleting the lines is what keeps the reported position honest.
+   *
+   * String literals are deliberately NOT blanked. A format string inside a
+   * template literal is exactly what this check exists to catch, and blanking
+   * literals to be safe would defeat it. The cost is that a retired format named
+   * inside a string is reported as live — a false positive in a comment-heavy
+   * file is recoverable, a missed `+1` placeholder is not.
+   *
+   * Note the tension with `LOCALE`, which matches *inside* literals: comment
+   * blanking must leave literals intact or the locale check has nothing to read,
+   * which is also why a `//` inside a string has to be recognised as not a
+   * comment. Both behaviours are required and test cases pin each of them.
+   */
+  function blankComments(text) {
+    let out = "";
+    let inBlock = false;
+    for (const raw of text.split("\n")) {
+      let line = "";
+      let inStr = null; // quote char, for `//` detection inside a URL etc.
+      let i = 0;
+      // A block comment's closing */ may sit mid-line and end before code resumes.
+      if (inBlock) {
+        const close = raw.indexOf("*/");
+        if (close === -1) { out += "\n"; continue; }
+        line += " ".repeat(close + 2);
+        i = close + 2;
+        inBlock = false;
+      }
+      while (i < raw.length) {
+        const ch = raw[i];
+        const next = raw[i + 1];
+        if (!inStr && ch === "/" && next === "*") {
+          const close = raw.indexOf("*/", i + 2);
+          if (close === -1) { inBlock = true; break; }
+          line += " ".repeat(close + 2 - i);
+          i = close + 2;
+          continue;
+        }
+        if (!inStr && ch === "/" && next === "/") break; // rest of line is comment
+        if (inStr) {
+          if (ch === "\\") { line += raw.slice(i, i + 2); i += 2; continue; }
+          if (ch === inStr) inStr = null;
+        } else if (ch === '"' || ch === "'" || ch === "`") {
+          inStr = ch;
+        }
+        line += ch;
+        i++;
+      }
+      out += line + "\n";
+    }
+    return out;
+  }
+
+  for (const file of walk(src)) {
+    const rel = relative(process.cwd(), file);
+    // Matched against the whole comment-stripped source, not line by line:
+    // a formatter can put `toLocaleString(` and `"en-US"` on separate lines, and
+    // a per-line match misses it entirely.
+    const stripped = blankComments(fsReadLines(file).join("\n"));
+
+    // Line number from a character offset. The offsets come from matches against
+    // the whole stripped source, so a call split across lines is still found and
+    // still reported at the line it starts on.
+    const lineAt = (offset) => stripped.slice(0, offset).split("\n").length;
+
+    // Line-oriented patterns run per line.
+    stripped.split("\n").forEach((line, i) => {
+      for (const [re, label] of RETIRED_FORMATS) {
+        checks++;
+        const m = line.match(re);
+        if (m) failures.push(`${rel}:${i + 1}: ${label} — "${m[0]}"`);
+      }
+    });
+
+    // The locale pattern is whitespace-tolerant by design and therefore must run
+    // against the whole source, not a single line. Exactly one of the three
+    // capture groups participates per match, depending on the quote style.
+    for (const m of stripped.matchAll(LOCALE)) {
+      checks++;
+      const locale = m[1] ?? m[2] ?? m[3];
+      if (locale !== "en-GH") {
+        failures.push(`${rel}:${lineAt(m.index)}: hardcoded locale "${locale}" — expected "en-GH"`);
+      }
+    }
   }
 }
 
@@ -124,4 +291,4 @@ if (failures.length) {
   if (unique.length > 40) console.error(`  …and ${unique.length - 40} more`);
   process.exit(1);
 }
-console.log("\nverify-visual: OK — no retired tokens, brand and structure correct.");
+console.log("\nverify-visual: OK - no retired tokens or national formats, brand and structure correct.");

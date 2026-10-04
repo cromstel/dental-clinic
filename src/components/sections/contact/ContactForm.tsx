@@ -94,7 +94,7 @@ export function ContactForm() {
             type="tel"
             value={fields.phone}
             onChange={(e) => update("phone", e.target.value)}
-            placeholder="+1 (___) ___-____"
+            placeholder="+233 __ ___ ____"
             className={inputCls}
           />
         </label>
