@@ -159,26 +159,42 @@ rmSync(archive, { force: true });
 writeFileSync(archive, zip);
 
 /**
- * Assert the archive contains the one file whose absence is silent and total.
+ * Assert the archive contains the files whose absence is silent and total.
  *
- * Without `.htaccess` at the root, LiteSpeed serves `.avif` as `text/plain`,
- * browsers refuse to decode it, and every `<picture>` falls back. The site
- * still returns 200 for every route, so nothing else reports it — it presents as
- * a caching problem and is not one. Checking here means the failure is caught
- * before the archive reaches a server rather than after.
+ * `.htaccess` — without it at the root, LiteSpeed serves `.avif` as
+ * `text/plain`, browsers refuse to decode it, and every `<picture>` falls back.
+ * The site still returns 200 for every route, so nothing else reports it; it
+ * presents as a caching problem and is not one.
+ *
+ * `LICENSE` — the site's legal notice, served at /LICENSE. Nothing reports its
+ * absence either: the pages render identically. It is asserted here because
+ * `npm run build:next` (the documented debug command) runs only `next build` and
+ * skips `scripts/stage-server-config.mjs`, so `out/` from that path has no
+ * `LICENSE` at all — `public/LICENSE` was removed when the licence became a
+ * repository-root file staged by the build. Checking here means the archive
+ * cannot be published without it.
+ *
+ * Checking here rather than only in the build is deliberate: this is the last
+ * step before bytes leave the machine, and it is the step someone runs after a
+ * partial build.
  */
 const names = entries.map((e) => e.rel);
-const missing = ["./.htaccess"].filter((f) => !names.includes(f));
+const REQUIRED = [
+  ["./.htaccess", "staged from public/.htaccess by scripts/stage-server-config.mjs"],
+  ["./LICENSE", "staged from the repository-root LICENSE by scripts/stage-server-config.mjs"],
+];
+const missing = REQUIRED.filter(([f]) => !names.includes(f)).map(([f]) => f);
 if (missing.length) {
   rmSync(archive, { force: true });
   console.error(`package-deploy: archive is missing ${missing.join(", ")} — not writing it.`);
   console.error(
-    "  .htaccess is staged into out/ by scripts/stage-server-config.mjs from\n" +
-      "  public/.htaccess. If this ran after `next build`, run `npm run build`.",
+    "  Both are staged into out/ by scripts/stage-server-config.mjs, which runs as part\n" +
+      "  of `npm run build`. `npm run build:next` runs only `next build` and skips it —\n" +
+      "  use the full build, or run `node scripts/stage-server-config.mjs` after it.",
   );
   process.exit(1);
 }
 
 console.log(`package-deploy: ${zip.length.toLocaleString()} bytes, ${entries.length} entries`);
-console.log("  .htaccess at archive root: yes");
+console.log("  .htaccess and LICENSE both present at the archive root");
 console.log("  upload to the website document root, then deploy with archive_path: out.zip");
