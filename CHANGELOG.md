@@ -25,6 +25,43 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   purge endpoint; that credential is no longer doing double duty.
 
 ### Fixed
+- **`verify-hosts.mjs` was validating a file nothing imports.** It read `site.url`
+  from `src/content/site.ts`, which the rebrand had left in place but which no
+  module referenced. Both files happened to carry the same origin, so the check
+  passed — and would have carried on passing after a real move, because it was
+  comparing `public/robots.txt` and `public/sitemap.xml` against a stale copy of
+  the origin rather than the live one. Demonstrated: changing `site.url` in the
+  module the site actually imports left the guard reporting the old origin as
+  "consistent" and exiting 0. It now reads `src/content/accra.ts`, and the same
+  change correctly fails the build. **A guard that validates a file nothing uses
+  is worse than no guard, because it is believed.**
+- **`src/content/site.ts` deleted.** Dead code holding the previous practice's
+  address and a `555` phone number, and the file the origin guard was reading.
+  Git history preserves the previous identity, which was the original reason for
+  keeping a parallel content file. Two README pointers aimed contributors at it.
+- **The published licence notice was serving the previous practice's address.**
+  `/LICENSE` on the live site carried `142 West 21st Street, New York, NY 10011`
+  — a Manhattan address, for a clinic in Osu, Accra — in the site's own legal
+  notice. It went unnoticed because there were two copies of the licence
+  (`LICENSE` and `public/LICENSE`), they disagreed, and nothing compared them.
+  `public/LICENSE` was also a crude string replacement of the root file, which
+  had produced `"CITGROUP", "CITGROUP", and associated branding` where the
+  trademark clause used to list two distinct names.
+- There is now one licence, at the repository root, with CITGROUP as the legal
+  entity and "Accra Dental Clinic" as the trading name.
+  `scripts/stage-server-config.mjs` stages it into the export and asserts the
+  published copy is byte-identical, that the retired address and trading name
+  are absent, and that the current identity is present. It also fails if a
+  `public/LICENSE` reappears. Negative-tested against 7 cases.
+- The internal `[OWNER NOTE — REMOVE BEFORE PUBLISHING THIS FILE]` block was
+  being published at `/LICENSE`. It is resolved and gone; a `PARTIES` clause
+  records that CITGROUP is the copyright holder instead.
+- The licence pointed reviewers at `src/content/site.ts` for the review-content
+  constraint. That module was retired in the rebrand; the path is now
+  `src/content/accra.ts`.
+- `scripts/verify-hosts.mjs` swept `public/LICENSE`, which no longer exists. The
+  walker skips absent paths silently, so the swept file count had quietly fallen
+  from 63 to 61 with nothing reporting it.
 - `js/log-injection` (severity: error) at two sites in the image pipeline.
   Externally-derived values are no longer interpolated into log lines.
 - `SECURITY.md` described signed-commit enforcement as an account-level
@@ -182,7 +219,7 @@ distinguish.
 - `LICENSE` — proprietary, all rights reserved, with a PATIENT DATA AND
   PRIVACY section recording the three constraints this site is bound by: no
   server-side data collection, no cookies or analytics, and reviews limited to
-  a first name plus neighbourhood. Published to the site via `public/LICENSE`.
+  a first name plus neighbourhood. Published to the site as `/LICENSE`, staged from the repository-root `LICENSE`.
 
 ### Known limitations
 - The 224 KB `3_kpja-cz731b.js` chunk is React 19 plus the Next client

@@ -61,7 +61,7 @@ src/
       contact/            # ContactForm (mailto), ContactDetails
     ui/                   # Cta, OptimizedImage, SmileGraphic, StepBadge, TextOutline, ToothVisual
   content/
-    site.ts               # ALL business copy + config (single source of truth)
+    accra.ts              # ALL business copy + config (single source of truth)
     types.ts              # TS interfaces
   lib/
     utils.ts              # cn, toMailto, formatPhoneLink, swatch/swatchText
@@ -92,17 +92,17 @@ scripts/
 its README). Everything needed to *produce* a deploy is tracked.
 
 ## Content Source
-All copy, services, doctors, hours, transformation stats, FAQs, contact info live in **`src/content/site.ts`**. Edit there — pages consume it directly.
+All copy, services, doctors, hours, transformation stats, FAQs, contact info live in **`src/content/accra.ts`**. Edit there — pages consume it directly, and `scripts/verify-hosts.mjs` reads `site.url` and `site.email` from it to check `public/robots.txt` and `public/sitemap.xml` have not drifted.
 
 ## Placeholders
 These are **not** production assets. Replace before launch.
 
-- Transformation images (`public/images/transform/`) are labelled as illustrative in `site.ts` and the pair is explicitly placeholder. Before/after clinical photography may only be published with documented written patient consent specifying scope of use.
+- Transformation images (`public/images/transform/`) are labelled as illustrative in `accra.ts` and the pair is explicitly placeholder. Before/after clinical photography may only be published with documented written patient consent specifying scope of use.
 - Doctor photos (`public/images/doctors/*.avif`) and service cards are generated placeholders.
 - Contact details in `src/content/accra.ts` are owner-supplied: the phone is `+233 24 732 2116` and `hello@cromstelit.com` is confirmed receiving mail. `metadataBase` and the published canonical host are `dental-clinic.cromstelit.com`; if the production domain differs, change `metadataBase` in `src/app/layout.tsx` **and** both `public/robots.txt` and `public/sitemap.xml` together — canonicals and the sitemap must not disagree.
 - The Instagram and TikTok handles in `socials` are **placeholders**, not registered accounts. They are published as `sameAs` in the JSON-LD, so a placeholder is also a claim of identity to search engines. Verify ownership on both platforms before replacing them; do not infer ownership from the name being available.
 - The address `18 Boundary Road, Osu, Accra` is owner-supplied and has not been independently verified against a listing.
-- `LICENSE` and `public/LICENSE` still carry **CITGROUP** as the legal entity, which is not the trading name. Substitute the registered entity if one exists; see the owner note at the foot of `LICENSE`. This is the one place the old identity legitimately remains.
+- **CITGROUP is the legal entity** and the copyright holder. "Accra Dental Clinic" is the trading name it operates the site under. `LICENSE` is the single source: it lives at the repository root, and `scripts/stage-server-config.mjs` stages it into the export as `/LICENSE` and asserts the copy is byte-identical. There is deliberately no `public/LICENSE` — two copies is what let them disagree.
 
 ## Deployment
 `out/` is a complete, self-contained static site, including `.htaccess` (copied by the build from `public/`) and `LICENSE`. Deploy the **contents** of `out/` to any static host, or wrap it as an archive with `npm run package:deploy` and deploy that. `trailingSlash: true` means the host must serve `about/index.html` at `/about/`.

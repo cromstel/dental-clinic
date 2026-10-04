@@ -16,10 +16,17 @@ import type {
 /**
  * Accra Dental Clinic — Osu, Accra.
  *
- * Rebrand of the live site from CITGROUP Dental Studio (Manhattan) to a
- * Greater Accra wellness clinic. This file is a parallel content set rather
- * than an edit of `site.ts`, so the previous identity stays readable in git
- * history and the change is reviewable as one deliberate swap.
+ * This file was introduced as a parallel content set alongside `site.ts` rather
+ * than as an edit of it, so the rebrand could land as one reviewable swap.
+ * `site.ts` has since been deleted: nothing imported it, but it held the
+ * previous practice's address and a `555` phone number, and `verify-hosts.mjs`
+ * was reading `site.url` from it rather than from the module the site actually
+ * uses — so it would have reported a stale origin as "consistent". The previous
+ * identity remains readable in git history, which was the original point of
+ * keeping a parallel file.
+ *
+ * CITGROUP remains the legal entity and copyright holder; that is recorded in
+ * `LICENSE`. "Accra Dental Clinic" is only the trading name.
  *
  * Palette notes live in `globals.css`. The short version: cocoa-black and bone
  * carry the brand, ochre is the single accent, clay appears only as a band

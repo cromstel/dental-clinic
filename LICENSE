@@ -1,26 +1,35 @@
 ﻿PROPRIETARY SOFTWARE LICENSE
-CITGROUP Dental Studio — All Rights Reserved
+CITGROUP — All Rights Reserved
 
-Copyright (c) 2026 CITGROUP Dental Studio. All rights reserved.
+Copyright (c) 2026 CITGROUP. All rights reserved.
 
 SPDX-License-Identifier: UNLICENSED
 
 ---
 
+PARTIES
+
+CITGROUP is the copyright holder of this work (the "Owner").
+
+"Accra Dental Clinic" is the trading name under which the Owner operates the
+live website at https://dental-clinic.cromstelit.com (the "Site"). References in
+this file to the Owner mean CITGROUP, not the trading name.
+
+---
+
 NOTICE
 
-This website and its source code are the proprietary property of CITGROUP
-Dental Studio. No rights are granted to any person other than the copyright
-holder. This is not an open-source project and no open-source license applies.
+This website and its source code are the proprietary property of CITGROUP. No
+rights are granted to any person other than the copyright holder. This is not an
+open-source project and no open-source license applies.
 
-The source code in this repository was created for and is owned by CITGROUP
-Dental Studio. It is published solely so that the live website at
-https://dental-clinic.cromstelit.com can be built, reviewed, and maintained by
+The source code in this repository was created for and is owned by CITGROUP. It
+is published solely so that the Site can be built, reviewed, and maintained by
 authorized parties.
 
 WHAT IS NOT PERMITTED
 
-Without the prior written permission of the copyright holder, you may NOT:
+Without the prior written permission of CITGROUP, you may NOT:
 
   - Copy, reproduce, or republish this source code, in whole or in part.
   - Modify, adapt, translate, or create derivative works from this code.
@@ -35,10 +44,9 @@ Without the prior written permission of the copyright holder, you may NOT:
 
 WHAT IS PERMITTED
 
-  - Viewing this code within CITGROUP Dental Studio and its authorized
-    contractors.
-  - Running it locally for development, review, or maintenance of the live site.
-  - Building and deploying it to CITGROUP Dental Studio's own infrastructure.
+  - Viewing this code within CITGROUP and its authorized contractors.
+  - Running it locally for development, review, or maintenance of the Site.
+  - Building and deploying it to CITGROUP's own infrastructure.
 
 THIRD-PARTY CODE
 
@@ -48,10 +56,10 @@ licenses are unaffected by this notice.
 
 PATIENT DATA AND PRIVACY
 
-This project processes personal data on behalf of a dental practice and must be
-assessed against applicable privacy law (including GDPR where it applies) before
-any change to data collection or handling. Three constraints follow from the
-current implementation and are part of the terms of use for this code:
+This project processes personal data on behalf of a dental practice and must
+be assessed against applicable privacy law (including GDPR where it applies)
+before any change to data collection or handling. Three constraints follow from
+the current implementation and are part of the terms of use for this code:
 
   1. The appointment enquiry form (src/components/sections/contact/
      ContactForm.tsx) does not transmit data to any server. It composes a
@@ -66,8 +74,8 @@ current implementation and are part of the terms of use for this code:
      consent banner. Introducing any analytics or tag-manager SDK requires a
      consent mechanism, a privacy policy, and an update to this section.
   3. Published reviews carry only a first name and a neighbourhood
-     (src/content/site.ts). This is deliberately reduced detail and must not be
-     expanded to surnames, full addresses, dates of treatment, or any other
+     (src/content/accra.ts). This is deliberately reduced detail and must not
+     be expanded to surnames, full addresses, dates of treatment, or any other
      attribute that would make a patient identifiable — a dental practice's
      readership makes such combinations identifying in a small locality.
 
@@ -78,34 +86,26 @@ public/images/ are generated placeholders and are not real patient records.
 
 TRADEMARKS
 
-"CITGROUP", "CITGROUP Dental Studio", and associated branding, logos, and site
-content are trademarks of CITGROUP Dental Studio and may not be used without
-permission.
+"CITGROUP" and "Accra Dental Clinic", and associated branding, logos, and site
+content, are trademarks of CITGROUP and may not be used without permission.
 
 PERMISSION AND LICENSING ENQUIRIES
 
 To request permission to use, copy, or license this code — for example, to
 reuse the design system, components, or animations in another project — contact
-CITGROUP Dental Studio:
+CITGROUP:
 
   Email:  hello@cromstelit.com
   Web:    https://dental-clinic.cromstelit.com
-  Postal: 142 West 21st Street, New York, NY 10011, United States
+  Phone:  +233 24 732 2116
+  Postal: 18 Boundary Road, Osu, Accra, Ghana
 
 Any permission granted will be in writing and will state its own terms. No
 verbal or implied permission exists.
 
 ---
 
-[OWNER NOTE — OPTIONAL, REMOVE OR COMPLETE BEFORE PUBLISHING THIS FILE]
-The copyright line above uses the trading name "CITGROUP Dental Studio" as
-recorded in `src/content/site.ts` (`site.fullName`). If the registered legal
-entity differs (for example, "... LLC" or a named professional corporation),
-replace the owner name in the copyright line with that exact legal name. No
-legal entity name was invented here.
-
-The contact email above is the site's general inbox. Confirm it is the right
-route for licensing and privacy enquiries, or substitute a dedicated address
-before this file is relied upon externally. The postal address and the phone
-number in `src/content/site.ts` are self-declared placeholders, so the phone is
-deliberately omitted above.
+This file is the single source of truth for the licence. `scripts/stage-server-config.mjs`
+copies it into the static export as `LICENSE`, and asserts the copy is byte-identical,
+so the published notice at /LICENSE cannot drift from this text. Do not add a second
+copy under `public/`.
