@@ -52,16 +52,43 @@ export function Counter({
   // statement of intent rather than a visible fix. It is worth correcting
   // because `en-US` is a leftover from the previous practice and a hardcoded
   // locale is exactly the sort of thing that survives a rebrand unnoticed.
-  const formatted = val.toLocaleString("en-GH", {
-    minimumFractionDigits: decimals,
-    maximumFractionDigits: decimals,
-  });
+  const format = (n: number) =>
+    n.toLocaleString("en-GH", {
+      minimumFractionDigits: decimals,
+      maximumFractionDigits: decimals,
+    });
 
+  const animated = format(val);
+  const settled = format(to);
+
+  // The count-up is decoration. It is hidden from assistive technology and the
+  // settled value is announced once instead.
+  //
+  // This used to render as bare text nodes, so the accessibility tree carried
+  // every intermediate frame — the stats band read as "0" "1" " / 0" "4", i.e.
+  // individual digits announced as they were recomputed about sixty times a
+  // second, never once presenting a number a visitor could use. A counter is a
+  // number in a sentence; a screen reader needs the number, not the animation.
+  //
+  // `useReducedMotion` already snapped to the final value above, but that only
+  // helps visitors who have asked for reduced motion. This helps everyone else,
+  // and it is the same pattern `SplitText` uses for the hero heading: the whole
+  // string once in `sr-only`, the animated copy `aria-hidden`.
+  //
+  // The ref stays on the outer span because `useInView` measures the element that
+  // occupies layout, not the decorative copy nested inside it.
   return (
     <span ref={ref} className={className}>
-      {prefix}
-      {formatted}
-      {suffix}
+      <span className="sr-only">
+        {prefix}
+        {settled}
+        {suffix}
+      </span>
+      <span aria-hidden="true">
+        {prefix}
+        {animated}
+        {suffix}
+      </span>
     </span>
   );
 }

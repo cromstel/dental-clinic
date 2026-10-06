@@ -192,6 +192,47 @@ this entry.
 - `.gitignore` pointed at `config/htaccess`, which no longer exists. The single
   source of truth is `public/.htaccess`.
 
+## [Unreleased]
+
+### Fixed
+- **The primary call to action had a third of its height dead.** Measured on
+  production: the header's "Book now" painted a 144x52 button, but the clickable
+  `<a>` was 144x19 — its box was the line box, which did not grow to contain the
+  `py-4` padding sitting on the inner span. The anchor's box fitted entirely
+  *inside* the painted pill, leaving 15px above and 17px below it inert. A visitor
+  aiming at the centre of the site's main button could click and get nothing.
+
+  The anchor is now `inline-block`, so it shrink-wraps its child including that
+  child's padding: 144x52, dead band 0px top and bottom. This only ever broke
+  where the anchor sat in ordinary flow — inside a flex container the anchor is
+  blockified and was already correct, which is why it went unnoticed on the
+  buttons further down the page.
+- **The footer's email link was a 162x19 target**, under the 24x24 that WCAG 2.2
+  SC 2.5.8 (Target Size, Minimum) requires. Now 162x32 via `inline-block py-1`.
+  Padding rather than a fixed height, so it still wraps on narrow viewports and
+  still reads as a text link rather than a button.
+
+  Site-wide after both: **0 targets under 24px across all 7 pages**, 195 controls
+  checked in a real browser.
+- **Animated counters were announced digit by digit.** `Counter` rendered the
+  animating value as bare text nodes, so the accessibility tree carried every
+  intermediate frame — the stats band read as "0" "1" " / 0" "4", individual
+  digits recomputed about sixty times a second, never once presenting a number a
+  visitor could use. It now exposes the settled value once in `sr-only` and marks
+  the animated copy `aria-hidden`, the same pattern `SplitText` already uses for
+  the hero heading. `useReducedMotion` had always snapped to the final value, but
+  that only helps visitors who asked for reduced motion; this helps everyone.
+- **`<meta name="color-scheme" content="light">` added.** The site pins its own
+  light surfaces, so without this a visitor whose browser is in dark mode got
+  dark-rendered form controls and scrollbars sitting on a bone page. Added to the
+  `viewport` export rather than as a literal tag, since Next routes Viewport
+  fields to the right tag itself.
+- `Cta`'s `lime` and `gold` variants had the same class string duplicated in both,
+  so editing one would have silently left the other behind with nothing reporting
+  it. They now share one constant, marked as an alias.
+
+### Changed
+
 ### Changed
 - **Removed the hero scroll indicator** — the hand-drawn SVG arrow at the foot of
   the homepage hero: a hairline that drew on via `stroke-dashoffset`, a chevron
@@ -348,7 +389,10 @@ distinguish.
 - `npm run lint` does not cover TypeScript. See `eslint.config.mjs` for why
   and how to re-enable it.
 - `deploy.yml` needs the five `HOSTINGER_SFTP_*` repository secrets before it
-  can run.
+  can run. **Superseded:** deploys now publish through Hostinger's static-site
+  archive API and the workflow needs a single secret, `HOSTINGER_API_TOKEN`. Kept
+  as written because this section records what was true at v1.0.0, but it does not
+  describe the current workflow.
 - Contact details in `src/content/site.ts` include a reserved `555` phone
   number and must be replaced before launch.
 - Images in `public/images/` are generated placeholders. Real patient

@@ -94,7 +94,7 @@ export function Footer() {
                 <li>
                   <a
                     href={`mailto:${site.email}`}
-                    className="break-all transition-colors hover:text-ochre"
+                    className="inline-block break-all py-1 transition-colors hover:text-ochre"
                   >
                     {site.email}
                   </a>
