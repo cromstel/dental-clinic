@@ -249,6 +249,61 @@ const check = (name, condition, detail) => {
   check("the gold palette is gone from the built CSS", !/--color-gold\b/.test(cssText));
 }
 
+/* 8. Every colour referenced in the built CSS is actually defined.
+ *
+ * This is the check that would have caught the worst defect this project has
+ * shipped: after the rebrand, four base-layer rules still referenced
+ * `--color-cream`, `--color-charcoal` and `--color-lime`, which the palette
+ * migration had renamed to `--color-bone`, `--color-cocoa` and `--color-ochre`.
+ *
+ * Nothing failed. Not the build, not lint, not typecheck, not
+ * `verify-contrast`, and not check 7 above — the new palette was present and the
+ * old names absent, so every existing guard was satisfied. A `var()` naming an
+ * undefined custom property is invalid at computed-value time, so the
+ * declaration is dropped: `body` ended up with a transparent background and
+ * black text instead of bone and cocoa, on every page of the live site.
+ *
+ * It was found by measuring getComputedStyle in a browser, not by any guard.
+ * This is the guard for that.
+ *
+ * Scope, and why it will not produce false positives:
+ *   - A reference carrying a fallback (`var(--x, value)`) is safe by
+ *     construction and is not reported. Tailwind emits four such internal
+ *     defaults, so this exclusion is load-bearing, not theoretical.
+ *   - next/font injects variables at runtime rather than in the stylesheet. None
+ *     appear as bare references in the built CSS today, so no allowlist is
+ *     needed; if one ever does, the failure names it so the exception is visible
+ *     rather than silent.
+ *   - Definitions are matched at a declaration position, so a `var(--x)` can
+ *     never be mistaken for a definition of `--x`. */
+{
+  const defined = new Set();
+  for (const m of cssText.matchAll(/(?:^|[{;\s])(--[a-zA-Z0-9_-]+)\s*:/g)) {
+    defined.add(m[1]);
+  }
+
+  const dangling = new Map();
+  for (const m of cssText.matchAll(/var\(\s*(--[a-zA-Z0-9_-]+)\s*([,)])/g)) {
+    const name = m[1];
+    if (m[2] === "," || defined.has(name)) continue; // fallback, or defined
+    dangling.set(name, (dangling.get(name) || 0) + 1);
+  }
+
+  for (const [name, count] of [...dangling].sort()) {
+    checks++;
+    failures.push(
+      `${name} is referenced ${count}x in the built CSS but never defined, so the ` +
+        `declaration resolves to nothing and is dropped. Map it to a defined token.`,
+    );
+  }
+  checks++;
+
+  notes.push(
+    `  ${defined.size} custom properties defined, ` +
+      `${dangling.size} referenced with no definition`,
+  );
+}
+
 console.log(`verify-aesthetic: ${checks} structural checks\n`);
 for (const n of notes) console.log(n);
 

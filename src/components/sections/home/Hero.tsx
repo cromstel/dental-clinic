@@ -169,7 +169,7 @@ export function Hero() {
         {/* Visual column — overlapping into the text, offset downward */}
         <motion.div style={reduce ? undefined : { y: visualY }} className="relative lg:-ml-8 lg:mt-24">
           <div className="relative">
-            {/* Decorative gold frame corners. Absolutely positioned against a
+            {/* Decorative ochre frame corners. Absolutely positioned against a
                 parent that has a fixed intrinsic size (the SVG's viewBox
                 aspect ratio), so they never shift layout after paint. */}
             <div

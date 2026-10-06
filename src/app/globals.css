@@ -105,7 +105,7 @@
 
 @layer base {
   * {
-    border-color: var(--color-charcoal);
+    border-color: var(--color-cocoa);
   }
 
   html {
@@ -119,8 +119,8 @@
   }
 
   body {
-    background: var(--color-cream);
-    color: var(--color-charcoal);
+    background: var(--color-bone);
+    color: var(--color-cocoa);
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
@@ -128,15 +128,15 @@
   }
 
   ::selection {
-    background: var(--color-lime);
+    background: var(--color-ochre);
     color: var(--color-ink);
   }
 
   :focus-visible {
-    /* Two-tone indicator. No single colour clears 3:1 against both the cream
-       page and the midnight hero, so the ring is built from two bands: a light
-       halo filling the outline offset (16.7:1 on midnight) plus the ink
-       outline that sits against the page (16.9:1 on cream). Whichever band
+    /* Two-tone indicator. No single colour clears 3:1 against both the bone
+       page and the cocoa hero, so the ring is built from two bands: a light
+       halo filling the outline offset (16.7:1 on cocoa) plus the ink
+       outline that sits against the page (16.9:1 on bone). Whichever band
        touches the background always clears 3:1. */
     outline: 2px solid var(--color-ink);
     outline-offset: 3px;

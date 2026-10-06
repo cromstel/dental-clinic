@@ -37,7 +37,7 @@ export function FaqAccordion() {
                   )}
                 >
                   <span className="flex items-baseline gap-4">
-                    {/* /35 was 2.17:1 on cream — the only genuine
+                    {/* /35 was 2.17:1 on bone — the only genuine
                         (non-decorative) contrast failure left on the site. */}
                     <span className="hidden font-display text-sm font-semibold text-cocoa/70 tabular-nums sm:block">
                       0{i + 1}

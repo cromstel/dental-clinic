@@ -7,6 +7,29 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Fixed
+- **The site was rendering with a transparent page background.** Four base-layer
+  rules in `globals.css` still referenced `--color-cream`, `--color-charcoal` and
+  `--color-lime` — names the rebrand had renamed to `--color-bone`,
+  `--color-cocoa` and `--color-ochre`. A `var()` naming an undefined custom
+  property is invalid at computed-value time, so the declaration is discarded:
+  `body` had `background: transparent` and `color: black` instead of bone and
+  cocoa, and `::selection` had no highlight background. Measured on production
+  before the fix — `getComputedStyle(document.body).backgroundColor` returned
+  `rgba(0, 0, 0, 0)`, where `#f4ede3` was intended. This has been live since the
+  rebrand.
+  **Nothing caught it.** The build passed, lint passed, typecheck passed,
+  `verify-contrast` passed, and `verify-aesthetic`'s existing palette check passed
+  — the new palette *was* present and the old names *were* absent. Every guard was
+  satisfied while the site rendered wrong.
+- **`verify-aesthetic.mjs` check 8: every colour referenced in the built CSS is
+  defined.** This is the guard for the above. References carrying a fallback are
+  excluded, which is load-bearing rather than theoretical — Tailwind emits four
+  internal defaults in that form. Definitions are matched at a declaration
+  position so `var(--x)` cannot be read as a definition of `--x`. Negative-tested
+  against the real shipped defect, not a synthetic one, plus a single undefined
+  token and the fallback case.
+
 ### Security
 - `source-map-js` pinned to `^1.2.2` via an npm `overrides` entry, clearing
   GHSA-68fv-2mgg-jv7q (high — event-loop denial of service through indexed
@@ -20,12 +43,25 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   Running it would silence every advisory while trading two major versions of
   the framework's tooling for dev-only findings. Recorded here so the next
   person does not try it.
-- **Five advisories left open deliberately**, all dev-only and none present in
-  the browser bundle: `eslint-config-next` (direct, dev), and its transitive
-  `braces`, `fast-glob`, `micromatch`, `@next/eslint-plugin-next`. These run in
-  CI and never in a visitor's browser. The correct resolution is an upstream bump
-  of `eslint-config-next` past 16.3.6, not a forced downgrade. Tracked rather
-  than skipped so CI resurfaces it when an upgrade is available.
+- **One advisory remains open, and it cannot be fixed.** `braces` is vulnerable
+  to stack exhaustion through deeply nested glob patterns (GHSA-vfj7-8cjw-p6xm,
+  affecting `<=3.0.3`). `braces@3.0.3` is the latest published version, so there
+  is no upgrade that clears it. `npm audit` reports this as *five* advisories —
+  `braces`, `micromatch`, `fast-glob`, `@next/eslint-plugin-next` and
+  `eslint-config-next` — but that is one root advisory propagated up four levels
+  of a single chain:
+
+      eslint-config-next -> @next/eslint-plugin-next -> fast-glob
+                         -> micromatch -> braces
+
+  None of the four outer packages is independently vulnerable. `eslint-config-next`
+  16.3.8 was checked and still pins `fast-glob@3.3.1`, so a patch upgrade does not
+  break the chain.
+- It is dev-only and does not block a merge: CI's blocking step is
+  `npm audit --omit=dev --audit-level=high`, which excludes `eslint-config-next`
+  entirely and reports **0 vulnerabilities**. The full report runs separately and
+  non-blocking, so a future upstream fix shows up there rather than as a red
+  build. Nothing needs suppressing.
 
 ### Decisions
 - **The social handles stay as placeholders.** `@accradentalclinic` on Instagram

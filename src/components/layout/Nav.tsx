@@ -101,10 +101,10 @@ export function Nav() {
     }
   }, [open, handleKeyDown]);
 
-  // The home hero is midnight navy and fills the first viewport, so while the
-  // header is still transparent there the header has to switch to the ivory
-  // palette. Charcoal-on-navy is a 1.03:1 contrast ratio — the nav was
-  // effectively invisible. Other routes start on the cream page and keep the
+  // The home hero is cocoa and fills the first viewport, so while the
+  // header is still transparent there the header has to switch to the bone
+  // palette. Cocoa-on-cocoa is a 1.03:1 contrast ratio — the nav was
+  // effectively invisible. Other routes start on the bone page and keep the
   // existing dark-on-light treatment.
   const overDarkHero = pathname === "/" && !scrolled;
 
