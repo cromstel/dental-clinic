@@ -44,10 +44,10 @@ export function CustomCursor() {
   if (reduce || !fine) return null;
 
   // The native cursor is suppressed (`.no-cursor`), so this has to stay
-  // legible over every surface it crosses — cream sections, the charcoal
-  // booking band and the midnight hero. White with `difference` blending
+  // legible over every surface it crosses — bone sections, the cocoa
+  // booking band and the cocoa hero. White with `difference` blending
   // inverts against the backdrop, so a single fill works on all of them
-  // (a fixed charcoal dot was 1.03:1 — effectively invisible — on the hero).
+  // (a fixed cocoa dot was 1.03:1 — effectively invisible — on the hero).
   return (
     <>
       <motion.div

@@ -18,7 +18,8 @@ const styles = {
   lime: "bg-ochre text-cocoa hover:bg-ochre",
   outline: "border border-current text-current hover:bg-cocoa hover:text-bone",
   cream: "bg-bone text-cocoa hover:bg-bone",
-  // Midnight/gold pair: midnight on gold is 7.7:1, gold-deep hover 6.4:1.
+  // Cocoa on ochre is 7.7:1, and the hover state is the same pair, so the
+  // measured contrast carries across both states.
   gold: "bg-ochre text-cocoa hover:bg-ochre",
   "outline-ochre":
     "border border-ochre text-bone hover:bg-ochre hover:text-cocoa",

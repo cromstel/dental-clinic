@@ -31,7 +31,7 @@ const inter = localFont({
 });
 
 /**
- * Editorial serif for the midnight hero. Vendored latin-subset woff2 so the
+ * Editorial serif for the cocoa hero. Vendored latin-subset woff2 so the
  * build stays network-independent and the face is self-hosted / preloadable
  * (the previous version pulled it from Google Fonts with a render-blocking
  * stylesheet, which cost FCP/LCP). `Times New Roman` is the right metric
