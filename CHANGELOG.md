@@ -7,6 +7,26 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Security
+- `source-map-js` pinned to `^1.2.2` via an npm `overrides` entry, clearing
+  GHSA-68fv-2mgg-jv7q (high — event-loop denial of service through indexed
+  source-map section offsets, affecting 1.0.0–1.2.1). It arrives transitively
+  through `postcss`, which both `@tailwindcss/postcss` and `next` depend on, and
+  CI audits production dependencies, so the build failed on it.
+- **`npm audit fix` is not usable in this repository.** For the one advisory
+  above it proposes a plain upgrade, but for the five below it proposes
+  installing `eslint-config-next@14.2.35` — a semver-major downgrade of the lint
+  configuration, on a project running `eslint-config-next` 16 and Next 16.
+  Running it would silence every advisory while trading two major versions of
+  the framework's tooling for dev-only findings. Recorded here so the next
+  person does not try it.
+- **Five advisories left open deliberately**, all dev-only and none present in
+  the browser bundle: `eslint-config-next` (direct, dev), and its transitive
+  `braces`, `fast-glob`, `micromatch`, `@next/eslint-plugin-next`. These run in
+  CI and never in a visitor's browser. The correct resolution is an upstream bump
+  of `eslint-config-next` past 16.3.6, not a forced downgrade. Tracked rather
+  than skipped so CI resurfaces it when an upgrade is available.
+
 ### Decisions
 - **The social handles stay as placeholders.** `@accradentalclinic` on Instagram
   and TikTok was invented when the rebrand landed. The owner has reviewed the
