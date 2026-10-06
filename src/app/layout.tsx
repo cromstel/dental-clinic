@@ -104,6 +104,16 @@ export const viewport: Viewport = {
   // Cocoa, matching the base surface, so the browser chrome does not flash a
   // light band before the page paints.
   themeColor: "#14100d",
+  // Declared rather than left to the user agent. The site pins its own light
+  // surfaces (bone page, cocoa hero), so without this a visitor whose browser is
+  // in dark mode gets dark-rendered form controls and scrollbars sitting on a
+  // light page — a dark input box on a bone background. The site is light-only
+  // by design, so it says so.
+  //
+  // This belongs in the `viewport` export rather than as a literal <meta> tag:
+  // Next routes Viewport fields to the right tag and keeps them out of the
+  // serialised metadata object.
+  colorScheme: "light",
   width: "device-width",
   initialScale: 1,
 };
