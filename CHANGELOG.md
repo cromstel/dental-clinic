@@ -7,6 +7,26 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Decisions
+- **The social handles stay as placeholders.** `@accradentalclinic` on Instagram
+  and TikTok was invented when the rebrand landed. The owner has reviewed the
+  trade-off and elected to keep them, so this is no longer an open question and
+  will not be raised as an outstanding finding again. The reasoning is unchanged
+  and is recorded in `src/content/accra.ts`: a placeholder handle in `sameAs` is
+  a claim of identity to search engines, and a live-looking handle that belongs
+  to a stranger would send patients to someone else's account. Swap them if the
+  practice registers the real ones — verify ownership on each platform first,
+  do not infer it from the name being available.
+- **The address stays as supplied.** `18 Boundary Road, Osu, Accra` is
+  owner-supplied and has never been checked against a listing or a map listing's
+  coordinates. It is published in the footer, the contact page, a map link and
+  the structured data. Confirmed as correct by the owner; treat it as verified by
+  the practice rather than by an independent source, and re-check it if the
+  practice moves.
+
+Neither blocks a deploy. No site content changed, so nothing was redeployed for
+this entry.
+
 ### Security
 - Branch protection on `main`: 5 required status checks with `strict` on,
   enforcement on admins, linear history, and branch deletion and force-pushes
