@@ -89,18 +89,19 @@ export const hours: HoursRow[] = [
  * PLACEHOLDER HANDLES — not real accounts.
  *
  * These are guesses, not registrations. `@accradentalclinic` was invented when
- * the rebrand landed and the owner has not supplied the real handles yet. Kept in
- * place deliberately rather than removed, at the owner's instruction, so the
- * layout, footer and structured data stay complete while the decision is pending.
+ * the rebrand landed and has never been claimed. The owner has reviewed the
+ * trade-off below and elected to keep them, so they are a settled decision rather
+ * than an outstanding question - they will not be raised as a finding again.
  *
  * The risk to remember before replacing these: a live-looking handle that belongs
  * to a stranger sends patients to someone else's account. Verify the handle is
- * actually yours on both platforms before it goes live — do not infer ownership
+ * actually yours on both platforms before it goes live - do not infer ownership
  * from the name being available.
  *
  * `sameAs` in the JSON-LD is built from these URLs, so a placeholder handle is
  * also published as a claim of identity to search engines. That is the strongest
- * argument for swapping them sooner rather than later.
+ * argument for swapping them sooner rather than later, and the reason this note
+ * exists even though the decision is made.
  */
 export const socials: SocialHandle[] = [
   {
