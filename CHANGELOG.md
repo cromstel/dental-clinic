@@ -193,6 +193,26 @@ this entry.
   source of truth is `public/.htaccess`.
 
 ### Changed
+- **Removed the hero scroll indicator** — the hand-drawn SVG arrow at the foot of
+  the homepage hero: a hairline that drew on via `stroke-dashoffset`, a chevron
+  head, a vertical "Scroll" editorial label, and a 2.4-second loop with its own
+  reduced-motion branch. 61 lines, one file, nothing else changed.
+
+  It was purely decorative (`aria-hidden`) and the label was the only text it
+  carried, so nothing semantic or accessible is lost. The hero's scroll-driven
+  parallax (`scrollYProgress`, `visualY`, `titleY`) is untouched — that is the
+  motion that makes the hero feel alive on scroll, and it is a different
+  mechanism from the indicator's looping draw-on animation.
+
+  Verified in the rendered export: the arrow's `viewBox`, both path `d`
+  attributes, the vertical label and its wrapper are all absent, and the hero's
+  `<h1>` and copy are intact. `verify-aesthetic`'s icon count is unchanged at 27
+  because that check counts `lucide`-classed elements and this was hand-drawn SVG
+  — the number moving would have meant the check was counting something else.
+
+  The CTA arrow (`Cta`'s `arrow` prop, a `lucide` `ArrowUpRight`) is a separate
+  component and is deliberately left in place; removing it would have changed
+  buttons on six pages.
 - **Contact phone is now `+233 24 732 2116`.** Previously `+233 30 274 0184`.
   The number appeared in two places — `site.phone` and a literal in
   `bookingCta.secondary` — so replacing one left the hero and footer showing a
