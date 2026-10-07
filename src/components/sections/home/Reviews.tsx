@@ -2,7 +2,7 @@
 
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { useCallback, useEffect, useState } from "react";
-import { Star, ArrowLeft, ArrowRight } from "lucide-react";
+import { Star, ArrowLeft, ArrowRight, Pause, Play } from "lucide-react";
 import { rating, reviews } from "@/content/accra";
 import { Reveal } from "@/components/motion/Reveal";
 import { Counter } from "@/components/motion/Counter";
@@ -10,11 +10,24 @@ import { Counter } from "@/components/motion/Counter";
 export function Reviews() {
   const reduce = useReducedMotion();
   const [index, setIndex] = useState(0);
-  const [paused, setPaused] = useState(false);
+
+  // Three independent reasons the carousel can be held still, rather than one
+  // boolean that two handlers fought over.
+  //
+  // Previously `onMouseLeave` and `onBlur` both wrote the same `paused` state, so
+  // whichever fired last won: moving the mouse out while a control still had focus
+  // resumed the rotation under the user's cursor, and blurring while the pointer
+  // was still over the block stopped it. Neither is what either event means.
+  const [heldByPointer, setHeldByPointer] = useState(false);
+  const [heldByFocus, setHeldByFocus] = useState(false);
+  const [heldByChoice, setHeldByChoice] = useState(false);
+
   const count = reviews.length;
 
   const next = useCallback(() => setIndex((i) => (i + 1) % count), [count]);
   const prev = useCallback(() => setIndex((i) => (i - 1 + count) % count), [count]);
+
+  const paused = heldByPointer || heldByFocus || heldByChoice;
 
   useEffect(() => {
     if (reduce || paused) return;
@@ -46,12 +59,27 @@ export function Reviews() {
           </h2>
         </Reveal>
 
+        {/*
+          `role="region"` with a label, rather than a bare div carrying mouse and
+          focus handlers.
+
+          The pause-on-interaction behaviour is deliberate and is not being removed
+          — it is what makes the block feel calm on hover. But a div with handlers
+          and no role is a landmark-shaped thing that is not a landmark, and the
+          handlers were doing accessibility work that assistive technology had no
+          way to see. As a labelled region the pause behaviour is discoverable, and
+          the block is announced as the reviews carousel rather than skipped.
+
+          `jsx-a11y/no-static-element-interactions` is what flagged this.
+        */}
         <div
+          role="region"
+          aria-label="Patient reviews"
           className="mt-16 grid grid-cols-1 gap-12 lg:grid-cols-[1.2fr_0.8fr] lg:gap-20"
-          onMouseEnter={() => setPaused(true)}
-          onMouseLeave={() => setPaused(false)}
-          onFocus={() => setPaused(true)}
-          onBlur={() => setPaused(false)}
+          onMouseEnter={() => setHeldByPointer(true)}
+          onMouseLeave={() => setHeldByPointer(false)}
+          onFocus={() => setHeldByFocus(true)}
+          onBlur={() => setHeldByFocus(false)}
         >
           <div className="relative min-h-[18rem] border-t-2 border-cocoa pt-10 sm:min-h-[16rem]">
             <AnimatePresence mode="wait">
@@ -74,9 +102,7 @@ export function Reviews() {
 
           <div className="flex flex-col items-start justify-between gap-10 lg:items-end">
             <div className="lg:text-right">
-              <p className="text-sm uppercase tracking-[0.25em] text-cocoa/70">
-                In their words
-              </p>
+              <p className="text-sm uppercase tracking-[0.25em] text-cocoa/70">In their words</p>
               <div className="mt-10 flex items-center gap-4">
                 <button
                   onClick={prev}
@@ -117,11 +143,36 @@ export function Reviews() {
                   />
                 </button>
               ))}
+
+              {/*
+                WCAG 2.2.2 (Pause, Stop, Hide).
+
+                This block rotates on its own every five seconds and keeps going.
+                Pausing on hover and on focus is a courtesy, not a mechanism a
+                visitor can rely on: a touch user has no hover, and a keyboard user
+                who tabs past the block has neither. Success Criterion 2.2.2 asks
+                for a user-activatable way to stop auto-updating content, so there
+                is an explicit control.
+
+                Hidden under `prefers-reduced-motion`, because `reduce` already stops
+                the rotation entirely — offering a pause for something that is not
+                moving would be a control that does nothing.
+              */}
+              {!reduce && (
+                <button
+                  onClick={() => setHeldByChoice((p) => !p)}
+                  aria-label={heldByChoice ? "Resume automatic rotation" : "Pause automatic rotation"}
+                  aria-pressed={heldByChoice}
+                  data-cursor="hover"
+                  className="ml-3 flex h-8 w-8 items-center justify-center rounded-full border border-cocoa/25 text-cocoa/70 transition-colors hover:border-cocoa hover:text-cocoa"
+                >
+                  {heldByChoice ? <Play className="h-4 w-4" /> : <Pause className="h-4 w-4" />}
+                </button>
+              )}
             </div>
           </div>
         </div>
-
-        </div>
+      </div>
     </section>
   );
 }
