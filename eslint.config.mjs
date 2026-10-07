@@ -67,6 +67,28 @@ require.cache[ts7Path] = {
 
 // Dynamic, for the hoisting reason above.
 const tseslint = await import("typescript-eslint");
+const reactHooks = (await import("eslint-plugin-react-hooks")).default;
+const jsxA11y = (await import("eslint-plugin-jsx-a11y")).default;
+
+// jsx-a11y ships both a plugin and a flat config. `recommended` is used rather
+// than `strict`.
+//
+// An earlier version of this comment claimed `strict` added no rules over
+// `recommended` and was therefore free to take. That was wrong, and taking it
+// proved it immediately: `strict` adds
+// `no-noninteractive-element-interactions`, which fires on the reviews carousel.
+//
+// That rule is right in general and wrong here. It objects to a `role="region"`
+// carrying `onMouseEnter`/`onMouseLeave`. But those handlers do not make the
+// region operable — they pause an animation that is already also pausable by an
+// explicit control and by keyboard focus. The only ways to satisfy the rule are
+// to add `tabIndex` and keyboard handlers, making a non-control announce itself as
+// a control, or to drop the pause-on-hover courtesy entirely. Both are worse than
+// the finding.
+//
+// So: `recommended`, and the specific rule that was excluded is named above so the
+// omission is visible rather than silent.
+const jsxA11yRules = jsxA11y.configs?.recommended?.rules ?? jsxA11y.configs?.flat?.recommended?.rules ?? {};
 
 export default [
   {
@@ -154,7 +176,7 @@ export default [
   // makes it useful tomorrow.
   {
     files: ["**/*.ts", "**/*.tsx"],
-    plugins: { "@typescript-eslint": tseslint.plugin },
+    plugins: { "@typescript-eslint": tseslint.plugin, "react-hooks": reactHooks },
     languageOptions: {
       parser: tseslint.parser,
       ecmaVersion: 2024,
@@ -206,9 +228,58 @@ export default [
       // a disguise, and is otherwise trivially evadable.
       "@typescript-eslint/no-unsafe-declaration-merging": "error",
 
+      // Hook correctness. Both measured 0 findings across all 54 TS/TSX files
+      // before being enabled, which is the only reason they are on: a rule that
+      // has been shown to hold is worth more than one that has merely never been
+      // run.
+      "react-hooks/rules-of-hooks": "error",
+      "react-hooks/exhaustive-deps": "error",
+
+      // `react-hooks/set-state-in-effect` is deliberately NOT enabled, and the
+      // fifth recommended rule alongside it is not either. Measured 5 findings,
+      // all legitimate:
+      //
+      //   useHydrated      setHydrated(true) on mount. A hydration gate cannot be
+      //                    derived during render — "am I hydrated" is unknowable
+      //                    until after it. This is the rule's own counter-example.
+      //   CustomCursor     setFine(matchMedia(...)). The query only exists in the
+      //                    browser, so it cannot be read during SSR.
+      //   Nav              setOpen(false) on pathname change. React's own guidance
+      //                    for resetting state when a prop changes.
+      //   Counter          setVal(to) once, to snap the count to its final value
+      //                    under reduced motion.
+      //   SplitText        setSettled(true) once, when animation is not wanted.
+      //
+      // The rule targets *unnecessary* cascading renders; all five are the
+      // "synchronise client-only state after mount" case that effects exist for.
+      // Enabling it would mean contorting correct code to satisfy a rule that
+      // cannot tell the difference, which is the mirror image of silencing a rule
+      // that is telling the truth.
+
       eqeqeq: ["error", "smart"],
       "no-var": "error",
       "prefer-const": "error",
     },
+  },
+
+  // Accessibility, from the rendered markup.
+  //
+  // Measured 1 finding with `recommended` across all 54 TS/TSX files, and that
+  // finding was real: `Reviews.tsx` had a div carrying pause handlers with no
+  // role, inside an auto-rotating carousel with no WCAG 2.2.2 pause control. Both
+  // fixed; the rule that now covers the first half is
+  // `no-static-element-interactions`.
+  //
+  // `strict` is not used, for the reason given beside the rule map above.
+  {
+    files: ["**/*.tsx"],
+    plugins: { "jsx-a11y": jsxA11y },
+    languageOptions: {
+      parser: tseslint.parser,
+      ecmaVersion: 2024,
+      sourceType: "module",
+      parserOptions: { ecmaFeatures: { jsx: true } },
+    },
+    rules: jsxA11yRules,
   },
 ];
