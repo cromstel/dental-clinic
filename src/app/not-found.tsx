@@ -1,7 +1,5 @@
-import Link from "next/link";
 import { Cta } from "@/components/ui/Cta";
 import { SmileGraphic } from "@/components/ui/SmileGraphic";
-import { site } from "@/content/accra";
 
 export default function NotFound() {
   return (

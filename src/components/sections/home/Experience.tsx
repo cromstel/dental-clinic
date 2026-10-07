@@ -10,7 +10,7 @@ import {
 import { useRef, useState } from "react";
 import { experience, experienceTitle } from "@/content/accra";
 import { swatch, cn } from "@/lib/utils";
-import { easeOutExpo, springExperience } from "@/lib/motion";
+import { easeOutExpo } from "@/lib/motion";
 import { useHydrated } from "@/lib/useHydrated";
 
 export function Experience() {
@@ -90,7 +90,7 @@ export function Experience() {
     <div ref={containerRef} className="relative">
       {/* Sticky sections - each 100vh */}
       <div className="absolute inset-0 -z-10" aria-hidden>
-        {experience.map((p, i) => (
+        {experience.map((p) => (
           <div
             key={p.word}
             className="relative h-screen w-full"

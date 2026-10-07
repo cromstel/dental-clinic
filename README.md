@@ -37,7 +37,9 @@ npm run lint       # eslint (build tooling only — see note)
 `scripts/simulate-ci.sh` runs the same assertions locally under Git Bash before you push.
 
 ### A note on linting
-`npm run lint` covers the JavaScript build tooling (`scripts/`, `next.config.mjs`, `postcss.config.mjs`), **not** `.ts`/`.tsx`. `eslint-config-next` cannot be loaded here: it pulls `typescript-eslint@8.70.1`, which throws on load when it detects TypeScript >= 7. `next lint` was also removed in Next 16, so the old `lint` script linted nothing at all.
+`npm run lint` covers `src/` as well as the build tooling. `next lint` was removed in Next 16, so this runs ESLint directly against a flat config in `eslint.config.mjs`.
+
+TypeScript is linted by pointing `typescript-eslint` at the **TypeScript 6 API**, installed under the alias `typescript-lint-api`, while `tsc --noEmit` keeps running on TypeScript 7. `typescript-eslint` reaches the compiler only through `require("typescript")` and throws on load when it sees TS >= 7, so `eslint.config.mjs` seeds the module cache for the lint process. The top of that file documents it, and `.npmrc` explains why installs need `legacy-peer-deps`.
 
 `src/` is covered by `npm run typecheck` instead, which is a stronger guarantee. To re-enable full TS linting, see the instructions at the top of `eslint.config.mjs`.
 

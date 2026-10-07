@@ -1,9 +1,8 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { Cta } from "@/components/ui/Cta";
 import { SmileGraphic } from "@/components/ui/SmileGraphic";
-import { site } from "@/content/accra";
 
 type ErrorBoundaryProps = {
   children: React.ReactNode;
