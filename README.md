@@ -41,7 +41,7 @@ npm run lint       # eslint (build tooling only — see note)
 
 TypeScript is linted by pointing `typescript-eslint` at the **TypeScript 6 API**, installed under the alias `typescript-lint-api`, while `tsc --noEmit` keeps running on TypeScript 7. `typescript-eslint` reaches the compiler only through `require("typescript")` and throws on load when it sees TS >= 7, so `eslint.config.mjs` seeds the module cache for the lint process. The top of that file documents it, and `.npmrc` explains why installs need `legacy-peer-deps`.
 
-`src/` is covered by `npm run typecheck` instead, which is a stronger guarantee. To re-enable full TS linting, see the instructions at the top of `eslint.config.mjs`.
+`tsc --noEmit` remains the authority on types — it is not replaced by any of this. The two checks overlap deliberately: ESLint here is a short, measured rule set rather than `tseslint.configs.recommended`, because adopting the recommended set on a codebase that had never been linted produces hundreds of findings, and the realistic options then are to fix all of them or silence most of them.
 
 ## Structure
 ```
