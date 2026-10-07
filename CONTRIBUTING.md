@@ -45,7 +45,7 @@ chore(actions): …     # Dependabot's prefix for action updates
 
 **Changing the production host means changing three things together:** `metadataBase` in `src/app/layout.tsx`, `public/robots.txt`, and `public/sitemap.xml`. Canonicals and the sitemap must agree.
 
-**Lint does not cover TypeScript.** `npm run lint` covers the JS build tooling only. `eslint-config-next` cannot load with TypeScript 7 — `typescript-eslint` throws on load. `src/` is guarded by `npm run typecheck` instead. See the note at the top of `eslint.config.mjs` for how to re-enable full TS linting.
+**The lint rule set for `src/` is deliberately short.** `npm run lint` does cover `.ts`/`.tsx` — `eslint.config.mjs` points `typescript-eslint` at the TypeScript 6 API so it can run alongside the TypeScript 7 compiler used for `typecheck`. But the rule set is a handful of rules that were measured against all 54 TS/TSX files and found clean, not `tseslint.configs.recommended`. Adopting the recommended set wholesale on a codebase that had never been linted produces hundreds of findings, and the realistic options then are to fix all of them or to silence most of them. Adding a rule is a deliberate act: check what it reports first.
 
 ## New colour pairs
 

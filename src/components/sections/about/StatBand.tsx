@@ -2,7 +2,7 @@
 
 import { Counter } from "@/components/motion/Counter";
 import { Reveal } from "@/components/motion/Reveal";
-import { intro, rating } from "@/content/accra";
+import { intro } from "@/content/accra";
 
 const stats = [
   { to: 4.9, decimals: 1, suffix: " / 5", label: "Average patient rating" },
