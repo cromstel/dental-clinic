@@ -5,11 +5,12 @@
   "license": "UNLICENSED",
   "scripts": {
     "dev": "next dev -p 5711",
-    "build": "next build && node scripts/rsc-payload-fix.mjs && node scripts/stage-server-config.mjs && node scripts/verify-export.mjs && node scripts/verify-hosts.mjs && node scripts/verify-contrast.mjs && node scripts/verify-encoding.mjs && node scripts/verify-visual.mjs && node scripts/verify-aesthetic.mjs && node scripts/verify-clinician-assets.mjs",
+    "build": "next build && node scripts/rsc-payload-fix.mjs && node scripts/stage-server-config.mjs && node scripts/verify-docs.mjs && node scripts/verify-export.mjs && node scripts/verify-hosts.mjs && node scripts/verify-contrast.mjs && node scripts/verify-encoding.mjs && node scripts/verify-visual.mjs && node scripts/verify-aesthetic.mjs && node scripts/verify-clinician-assets.mjs",
     "verify:hosts": "node scripts/verify-hosts.mjs",
     "verify:contrast": "node scripts/verify-contrast.mjs",
     "verify:encoding": "node scripts/verify-encoding.mjs",
     "verify:visual": "node scripts/verify-visual.mjs",
+    "verify:docs": "node scripts/verify-docs.mjs",
     "verify:aesthetic": "node scripts/verify-aesthetic.mjs",
     "verify:clinicians": "node scripts/verify-clinician-assets.mjs",
     "package:deploy": "node scripts/package-deploy.mjs",

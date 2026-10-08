@@ -17,9 +17,33 @@ done
 echo "--- step: assert build scripts are wired into npm run build ---"
 scripts=$(node -p "require('./package.json').scripts.build")
 echo "  build = $scripts"
-# Must stay in step with the same list in ci.yml. When these diverge the
-# simulation still passes, so a newly wired guard looks unverified.
-for s in rsc-payload-fix stage-server-config verify-export verify-hosts; do
+
+# The guard list is READ OUT OF ci.yml rather than copied here.
+#
+# An earlier version of this file carried its own copy and its own warning that the
+# two "must stay in step". They were not in step: it asserted 4 of the scripts CI
+# asserts, so six guards could be unwired locally and the simulation still passed --
+# which is the exact failure the comment described, already realised. A duplicated
+# list with a comment asking people to keep it updated is not a mechanism.
+#
+# `tr -d '\r'` because the working tree is CRLF, and without it `do$` never matches
+# and the list reads as empty -- a silent pass with a scary-looking empty line.
+ci_yml=".github/workflows/ci.yml"
+if [ ! -f "$ci_yml" ]; then
+  echo "::error::$ci_yml missing; cannot verify wiring"
+  exit 1
+fi
+list=$(tr -d '\r' < "$ci_yml" | sed -n 's/^ *for s in \(.*\); do$/\1/p' | head -n 1)
+if [ -z "$list" ]; then
+  echo "::error::could not read the guard list from $ci_yml -- has the line been reworded?"
+  exit 1
+fi
+if [ -z "$(echo "$list" | tr -s ' ' '\n' | grep -c .)" ]; then
+  echo "::error::guard list from $ci_yml is blank"
+  exit 1
+fi
+echo "  guard list (from ci.yml): $list"
+for s in $list; do
   case "$scripts" in
     *"$s"*) echo "  wired: $s" ;;
     *) echo "::error::build script not wired into npm run build: $s"; exit 1 ;;
@@ -28,6 +52,12 @@ done
 
 echo "--- step: check declared origin matches static files ---"
 node scripts/verify-hosts.mjs
+
+# Mirrors the ci.yml step of the same name, which runs these three before the slow
+# build because each reads only committed files and fails in seconds.
+echo "--- step: check palette contrast and documentation drift ---"
+node scripts/verify-contrast.mjs
+node scripts/verify-docs.mjs
 
 echo "--- step: confirm export is non-trivial ---"
 count=$(find out -type f | wc -l)

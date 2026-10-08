@@ -158,7 +158,7 @@ jobs:
           # Each of these fails the build on a failure mode that is otherwise
           # silent: a broken export, a host mismatch between code and the static
           # robots/sitemap, a .htaccess that lost its AVIF MIME rules.
-          for s in rsc-payload-fix stage-server-config verify-export verify-hosts verify-contrast verify-encoding verify-visual verify-aesthetic verify-clinician-assets; do
+          for s in rsc-payload-fix stage-server-config verify-docs verify-export verify-hosts verify-contrast verify-encoding verify-visual verify-aesthetic verify-clinician-assets; do
             case "$scripts" in
               *"$s"*) echo "  wired: $s" ;;
               *) echo "::error::build script not wired into npm run build: $s"; exit 1 ;;
@@ -175,7 +175,13 @@ jobs:
       # verify-contrast runs here too: it only reads globals.css, and it is the
       # check that would catch a palette edit that breaks a text/background pair
       # before that edit reaches a build.
-      - name: Check declared origin, email domains and palette contrast
+      #
+      # verify-docs is here for the same reason: it reads package.json and three text
+      # files, and it is the check that stops a "Known limitations" bullet claiming
+      # a package is absent while package.json says it is installed. That drift has
+      # happened twice on this repo, and both times the build passed.
+      - name: Check declared origin, email domains, palette contrast and doc drift
         run: |
           node scripts/verify-hosts.mjs
           node scripts/verify-contrast.mjs
+          node scripts/verify-docs.mjs
