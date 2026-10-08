@@ -38,11 +38,22 @@ if [ -z "$list" ]; then
   echo "::error::could not read the guard list from $ci_yml -- has the line been reworded?"
   exit 1
 fi
-if [ -z "$(echo "$list" | tr -s ' ' '\n' | grep -c .)" ]; then
-  echo "::error::guard list from $ci_yml is blank"
+# `grep -c .` always PRINTS a number — 0 when nothing matches — and a command
+# substitution containing "0" is not empty, so `[ -z ... ]` could never be true and
+# this check had never fired. Reported in review, and it was right: the case it was
+# written for is `for s in  ; do`, where the capture is whitespace only, non-empty,
+# and skips the first test above — so the loop would run zero times and the
+# simulation would pass without checking a single guard. That is the silent pass the
+# comment at line 29 describes, arriving through the check meant to catch it.
+#
+# Compare the count to zero. `|| true` because `set -e` is on and `grep -c` exits 1
+# when the count is 0, which would abort before printing the reason.
+count=$(echo "$list" | tr -s ' ' '\n' | grep -c . || true)
+if [ "$count" -eq 0 ]; then
+  echo "::error::guard list from $ci_yml is blank — has the line been reworded?"
   exit 1
 fi
-echo "  guard list (from ci.yml): $list"
+echo "  guard list (from ci.yml): $list ($count guard(s))"
 for s in $list; do
   case "$scripts" in
     *"$s"*) echo "  wired: $s" ;;

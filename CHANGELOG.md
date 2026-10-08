@@ -58,6 +58,20 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   a mechanism. `tr -d '\r'` handles the CRLF working tree — without it `do$` never
   matches and the list reads as empty, which is a silent pass wearing a scary-looking
   error line.
+  **The blank-list check in that line was dead, and review caught it.** It read
+  `if [ -z "$(… | grep -c .)" ]` — but `grep -c` always *prints* a number, `0` when
+  nothing matches, and a substitution containing `0` is not empty. So the test could
+  never be true and had never run. The case it existed for is a `for s in  ; do` line
+  whose capture is whitespace only: non-empty, so it passed the earlier `-z "$list"`
+  test, then produced a count of `0`, which the broken check ignored — the loop would
+  have run zero times and the simulation would have passed without checking a single
+  guard. That is the silent pass the comment above it describes, arriving through the
+  check written to prevent it. Now compares the count to zero, with `|| true` because
+  `set -e` would otherwise abort on `grep`'s non-zero exit before printing why.
+  Negative-tested both ways: on the whitespace-only line it exits 1 with the
+  blank-list message and reports no guard as wired, on a missing line it exits 1 with
+  the "could not read the guard list" message, `ci.yml` is byte-identical to git
+  afterwards, and the untouched script still passes.
 
 - **Removed the hero scroll indicator** — the hand-drawn SVG arrow at the foot of the homepage hero: a hairline that drew on via `stroke-dashoffset`, a chevron head, a vertical "Scroll" editorial label, and a 2.4-second loop with its own reduced-motion branch. 61 lines, one file, nothing else changed. It was purely decorative (`aria-hidden`) and the label was the only text it carried, so nothing semantic or accessible is lost. The hero's scroll-driven parallax (`scrollYProgress`, `visualY`, `titleY`) is untouched — that is the motion that makes the hero feel alive on scroll, and it is a different mechanism from the indicator's looping draw-on animation. Verified in the rendered export: the arrow's `viewBox`, both path `d` attributes, the vertical label and its wrapper are all absent, and the hero's `<h1>` and copy are intact. `verify-aesthetic`'s icon count is unchanged at 27 because that check counts `lucide`-classed elements and this was hand-drawn SVG — the number moving would have meant the check was counting something else. The CTA arrow (`Cta`'s `arrow` prop, a `lucide` `ArrowUpRight`) is a separate component and is deliberately left in place; removing it would have changed buttons on six pages.
 - **Contact phone is now `+233 24 732 2116`.** Previously `+233 30 274 0184`. The number appeared in two places — `site.phone` and a literal in `bookingCta.secondary` — so replacing one left the hero and footer showing a different number from the call button on the same page. `bookingCta` now interpolates `site.phone.display`, leaving one declaration.
