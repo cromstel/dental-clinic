@@ -9,6 +9,32 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
+- **`scripts/verify-docs.mjs` — the build now fails when the documentation contradicts `package.json`.**
+  The changelog has twice claimed something the code had stopped being. "npm run
+  lint does not cover TypeScript" was true at v1.0.0 and false for several PRs before
+  anyone removed it. And "`eslint-plugin-react-hooks` and `eslint-plugin-jsx-a11y`
+  are no longer in the tree at all... Neither is configured" was left in place by the
+  very PR that added and configured them, so a single file asserted both. In both
+  cases the code was right, the prose was stale, and lint, typecheck and the build
+  all passed — nothing in the pipeline was looking.
+  The guard reads `package.json`, then scans the `[Unreleased] Known limitations`
+  section plus `README.md` and `CONTRIBUTING.md` for bullets asserting a package is
+  absent — "no longer in the tree", "not configured", "not installed" — and
+  cross-references every backticked name in such a bullet against the installed set.
+  Wired into `npm run build`, into the fast pre-build step in `ci.yml` (it reads only
+  committed files, so it fails in seconds rather than after a full export), and
+  asserted by the existing build-wiring check.
+  The v1.0.0 section is excluded on purpose. That section is explicitly historical,
+  records superseded facts, and says so.
+  **Negative-tested, and the test found a real bug.** With a fabricated bullet naming
+  three packages that are in `package.json`, the guard exits non-zero and names all
+  three; the file is then restored byte-for-byte and the guard passes again. That
+  exercise caught the first version reporting OK while checking nothing: `rest.slice(1)`
+  left `## Known limitations` matching the very heading search it was meant to skip,
+  so the section extracted was four characters long and the changelog was never
+  scanned. The extraction now throws if its scope yields no bullets, so that specific
+  failure can only return as a loud error.
+
 - **`react-hooks` and `jsx-a11y`, enabled from measurement rather than by default.** Both plugins arrived previously only as transitive dependencies of `eslint-config-next`, so removing that package left the tree with neither. They are now direct dev dependencies with a rule set chosen by sweeping all 54 TS/TSX files first, rather than by turning on `recommended` and seeing what broke: | rule set | findings | decision | |---|---|---| | `react-hooks/rules-of-hooks` | 0 | enabled | | `react-hooks/exhaustive-deps` | 0 | enabled | | `react-hooks/set-state-in-effect` | 5 | **not enabled** — see below | | `jsx-a11y` `recommended` | 1 | enabled, after fixing the finding | A rule that has been shown to hold across the codebase is worth more than one that has merely never been run. The two enabled hooks rules report nothing today and will report the day a hook is wrong. **`set-state-in-effect` is deliberately not enabled**, and all five findings are legitimate: `useHydrated` sets state on mount (a hydration gate cannot be derived during render — that is the rule's own counter-example); `CustomCursor` reads `matchMedia`, which does not exist on the server; `Nav` closes its menu on `pathname` change, which is React's documented approach to resetting state on a prop change; and `Counter` and `SplitText` each set state once to settle under reduced motion. The rule targets *unnecessary* cascading renders, and all five are the "synchronise client-only state after mount" case effects exist for. Enabling it would mean contorting correct code to satisfy a rule that cannot tell the difference — the mirror image of silencing a rule that is telling the truth. **`jsx-a11y` `strict` is not used, and this corrects an earlier claim in this file.** An intermediate note asserted that `strict` added no rules over `recommended` and was therefore free to take. Taking it proved otherwise immediately: `strict` adds `no-noninteractive-element-interactions`, which fires on the reviews carousel. That rule is right in general and wrong here — the handlers it objects to do not make the region operable, they pause an animation that is already pausable by an explicit control and by keyboard focus. The only ways to satisfy it are to make a non-control announce itself as a control, or to drop the pause-on-hover behaviour. Both are worse than the finding, so the rule is excluded by name rather than silently.
 - **`npm run lint` now covers `src/`.** This closes a limitation documented in `README.md`, `CONTRIBUTING.md` and the changelog since the rebrand: `src/` had no ESLint at all, only `tsc`. The blocker was upstream. `eslint-config-next` pulls `typescript-eslint`, which hard-throws on load when it sees TypeScript >= 7, and this project is on `typescript@7.0.2` — the native compiler, deliberately, for speed. The previous response was to narrow the config to the JavaScript build tooling and record the gap. `typescript-eslint` reaches the compiler through exactly one call, `require("typescript")`, with no option to supply a different one — and its own error message names the answer: run it against the TypeScript 6 API that ships side by side with 7. So `typescript@6.0.3` is installed under the alias `typescript-lint-api`, and `eslint.config.mjs` seeds the CommonJS module cache so that `require("typescript")` yields the v6 copy **for the lint process only**. `tsc --noEmit` is untouched and still runs on TypeScript 7. Three things were verified before building on it, because a parser that loads and reports nothing proves nothing:
 - the upstream gate is version-based, so redirecting the module redirects the gate — without the shim it throws, with it, 136 rules load
@@ -24,6 +50,29 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Changed
 
+- **`scripts/simulate-ci.sh` reads its guard list from `ci.yml` instead of keeping a
+  copy.** It asserted 4 of the 10 scripts CI asserts, and carried a comment saying the
+  two "must stay in step". They were not in step: six guards could be unwired locally
+  and the simulation would still pass, which is exactly what that comment warned
+  about, already realised. A duplicated list plus a request to keep it updated is not
+  a mechanism. `tr -d '\r'` handles the CRLF working tree — without it `do$` never
+  matches and the list reads as empty, which is a silent pass wearing a scary-looking
+  error line.
+  **The blank-list check in that line was dead, and review caught it.** It read
+  `if [ -z "$(… | grep -c .)" ]` — but `grep -c` always *prints* a number, `0` when
+  nothing matches, and a substitution containing `0` is not empty. So the test could
+  never be true and had never run. The case it existed for is a `for s in  ; do` line
+  whose capture is whitespace only: non-empty, so it passed the earlier `-z "$list"`
+  test, then produced a count of `0`, which the broken check ignored — the loop would
+  have run zero times and the simulation would have passed without checking a single
+  guard. That is the silent pass the comment above it describes, arriving through the
+  check written to prevent it. Now compares the count to zero, with `|| true` because
+  `set -e` would otherwise abort on `grep`'s non-zero exit before printing why.
+  Negative-tested both ways: on the whitespace-only line it exits 1 with the
+  blank-list message and reports no guard as wired, on a missing line it exits 1 with
+  the "could not read the guard list" message, `ci.yml` is byte-identical to git
+  afterwards, and the untouched script still passes.
+
 - **Removed the hero scroll indicator** — the hand-drawn SVG arrow at the foot of the homepage hero: a hairline that drew on via `stroke-dashoffset`, a chevron head, a vertical "Scroll" editorial label, and a 2.4-second loop with its own reduced-motion branch. 61 lines, one file, nothing else changed. It was purely decorative (`aria-hidden`) and the label was the only text it carried, so nothing semantic or accessible is lost. The hero's scroll-driven parallax (`scrollYProgress`, `visualY`, `titleY`) is untouched — that is the motion that makes the hero feel alive on scroll, and it is a different mechanism from the indicator's looping draw-on animation. Verified in the rendered export: the arrow's `viewBox`, both path `d` attributes, the vertical label and its wrapper are all absent, and the hero's `<h1>` and copy are intact. `verify-aesthetic`'s icon count is unchanged at 27 because that check counts `lucide`-classed elements and this was hand-drawn SVG — the number moving would have meant the check was counting something else. The CTA arrow (`Cta`'s `arrow` prop, a `lucide` `ArrowUpRight`) is a separate component and is deliberately left in place; removing it would have changed buttons on six pages.
 - **Contact phone is now `+233 24 732 2116`.** Previously `+233 30 274 0184`. The number appeared in two places — `site.phone` and a literal in `bookingCta.secondary` — so replacing one left the hero and footer showing a different number from the call button on the same page. `bookingCta` now interpolates `site.phone.display`, leaving one declaration.
 - **Clinician portraits renamed to match their clinicians.** `olivia.*` and `ethan.*` were the previous practice's filenames, still rendering behind Dr. Ama Serwaa Boateng and Dr. Kwesi Mensah after the rebrand. Alt text is built from `name` and `role`, so nothing looked wrong and nothing failed. Now `ama-serwaa-boateng.*` and `kwesi-mensah.*`, all four variants each.
@@ -32,6 +81,13 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Post-deploy checks extended: the smoke test now asserts an unknown URL returns 404, and a new step asserts the live cache policy matches `.htaccess`, so a silent regression like the one above fails the deploy.
 
 ### Removed
+
+- **A Known limitations bullet claiming both lint plugins were absent.**
+  `CHANGELOG.md` said in one place that `react-hooks` and `jsx-a11y` were "now direct
+  dev dependencies", and in another that they were "no longer in the tree at all...
+  Neither is configured." The second was left behind by the PR that made the first
+  true. Removed; the `.npmrc` limitation, the only other entry in that section, is
+  untouched.
 
 - **`eslint-config-next`, which was vestigial.** Nothing imported it — the config only ever imported `@eslint/js` — yet it was still declared and installed, pulling `typescript-eslint`, `eslint-plugin-react`, `jsx-a11y`, `react-hooks`, and the `fast-glob` -> `micromatch` -> `braces` chain behind it. This resolves the one advisory previously recorded as unfixable. `braces` (GHSA-vfj7-8cjw-p6xm) affects every published version including the latest, so there was never a version to upgrade to; the fix was to stop depending on it. `npm audit` now reports **0 vulnerabilities** for the whole tree, dev included, where it previously reported 5 — the same root advisory counted once per level of a chain that no longer exists.
 - `.github/dependabot.yml` keeps its grouped dev-tooling update config; the comment above it referenced `eslint-config-next` and no longer does.
@@ -95,7 +151,6 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ### Known limitations
 
 - **`.npmrc` sets `legacy-peer-deps=true`.** npm checks `typescript-eslint`'s declared peer range (`<6.1.0`) against the top-level `typescript@7.0.2` and refuses to install. The peer is satisfied in practice — the linter genuinely runs on 6.0.3 — but npm only sees the declared tree. Declared in `.npmrc` rather than passed as a flag, so `npm ci`, a fresh clone and a local install all behave the same; a hand-typed flag is the version of this that breaks CI quietly. The cost is stated plainly: while it is set, npm will not complain about *any* peer conflict here, not just this one. Accepted because the alternatives are downgrading the TypeScript toolchain or leaving `src/` unlinted. Delete the line once upstream widens the peer range (typescript-eslint issue #10940).
-- `eslint-plugin-react-hooks` and `eslint-plugin-jsx-a11y` are no longer in the tree at all, since they arrived only as transitive dependencies of `eslint-config-next`. Neither is configured. Both are worth adding as direct dev dependencies with a measured rule set, in the same way as above — not enabled blind.
 
 ## [1.0.0] — 2026-09-28
 

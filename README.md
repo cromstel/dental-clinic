@@ -81,6 +81,7 @@ scripts/
   rsc-payload-fix.mjs     # normalizes RSC prefetch filenames (see Scripts)
   stage-server-config.mjs # asserts out/.htaccess and its MIME rules
   verify-export.mjs       # fails the build if the export is not deployable
+  verify-docs.mjs         # fails the build if the docs contradict package.json
   simulate-ci.sh          # run the CI assertions locally
   simulate-release-package.sh  # exercises the release tarball packaging locally
   download-and-convert-images.js  # one-off asset pipeline (Unsplash -> AVIF)
