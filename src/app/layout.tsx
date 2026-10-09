@@ -11,10 +11,17 @@ import { MotionProvider } from "@/components/motion/MotionProvider";
 import { CustomCursor } from "@/components/motion/CustomCursor";
 import "./globals.css";
 
+/**
+ * Only 600 and 700 ship. Measured across all seven rendered routes, the display
+ * face resolved to exactly those two weights (247 and 107 elements); 400 and 500
+ * resolved nowhere. 400's only consumer was a micro-label that had inherited the
+ * display face from the h1-h4 base rule and is now explicitly `font-sans`.
+ * next/font preloads every weight in `src`, so an unused weight is a wasted
+ * request on first paint for all seven pages. The source files stay in
+ * `assets/fonts` so this is reversible by adding one line.
+ */
 const clash = localFont({
   src: [
-    { path: "../assets/fonts/ClashDisplay-400.woff2", weight: "400", style: "normal" },
-    { path: "../assets/fonts/ClashDisplay-500.woff2", weight: "500", style: "normal" },
     { path: "../assets/fonts/ClashDisplay-600.woff2", weight: "600", style: "normal" },
     { path: "../assets/fonts/ClashDisplay-700.woff2", weight: "700", style: "normal" },
   ],
