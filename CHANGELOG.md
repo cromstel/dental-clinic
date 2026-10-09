@@ -50,6 +50,30 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Changed
 
+- **The display face ships two weights instead of four.** Measured across all seven
+  rendered routes, Clash Display resolved to exactly two weights — 600 and 700, on
+  247 and 107 elements. Weight 500 resolved nowhere on the site. Weight 400 resolved
+  to exactly two elements, both of them the same micro-label on `/services/`
+  (`"4 teeth · 1 appointment"`), which was reading the display face only because
+  `h1`–`h4` inherit `font-display` from `globals.css` and the span set
+  `font-normal` without setting a family. That label is now explicitly `font-sans`,
+  which is what a 14px detail line should have been set in regardless.
+  `next/font` preloads every weight in its `src` array, so each unused weight was a
+  wasted request on first paint of all seven pages: **29.7 KB across two files
+  (14.8 + 14.9)**. Confirmed absent from `out/_next/static/media` after the rebuild —
+  five font files are now fetched where seven were. The `.woff2` sources are still in
+  `src/assets/fonts`, so restoring a weight is one line.
+- **The patient testimonial is set as a quotation.** It was `font-display` at
+  `text-3xl`/`sm:text-5xl` semibold — a testimonial shouted in a geometric display
+  face reads as advertising. It is now the editorial serif in italic, which reads as
+  something a patient said. This establishes the rule the serif follows from here:
+  **the serif carries quotation and voice, Clash carries structure and headlines.**
+  Two type settings changed with it. `leading-[1.1]` became `1.22`, because a serif
+  italic at 30px needs the extra leading to stay readable. `tracking-tight` was
+  dropped, because negative tracking closes up a serif's joins — it is the right
+  setting for a geometric display face and the wrong one here. The quote mark is
+  still set by the component rather than added to the content.
+
 - **`scripts/simulate-ci.sh` reads its guard list from `ci.yml` instead of keeping a
   copy.** It asserted 4 of the 10 scripts CI asserts, and carried a comment saying the
   two "must stay in step". They were not in step: six guards could be unwired locally
@@ -94,6 +118,19 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
+- **A headline asked for an italic the site did not have.** The last word of the
+  manifesto on `/about/` — "about." — was marked `italic` inside a `font-display`
+  headline, but Clash Display ships no italic face: all four `src` entries were
+  `style: "normal"`. The browser therefore synthesised an oblique by shearing the
+  upright outlines, so the word did not match the rest of its own headline. Nothing
+  failed and nothing looked obviously broken, which is why it survived; it was found
+  by reading the emitted `@font-face` rules against the elements that request them.
+  The word is now set in the editorial serif's genuine italic.
+  `font-normal` is load-bearing there and not a style choice: the headline is
+  `font-bold`, Instrument Serif ships only 400, and inheriting 700 would have
+  synthesised a **bold** — trading one fake style for another. Measured after the
+  rebuild, the word resolves to `instrument` / weight 400 / `font-style: italic`,
+  with no synthesis on either axis.
 - **The reviews carousel had no way to stop.** It rotates every five seconds and keeps going, pausing only on hover and on focus — a courtesy rather than a mechanism, since a touch user has no hover and a keyboard user who tabs past the block has neither. WCAG 2.2.2 (Pause, Stop, Hide) asks for a user-activatable way to stop auto-updating content, so there is now an explicit pause/play control with `aria-pressed`. It is hidden under `prefers-reduced-motion`, because `reduce` already stops the rotation and a pause button for something not moving would be a control that does nothing.
 - **Hover and focus fought over one boolean.** `onMouseLeave` and `onBlur` both wrote the same `paused` state, so whichever fired last won: moving the mouse out while a control still had focus resumed the rotation under the cursor, and blurring while the pointer was over the block stopped it. Three independent reasons to hold now combine instead of overwriting each other.
 - **A div carried accessibility handlers with no role.** The pause-on-interaction behaviour is deliberate and is kept, but as a bare `div` the handlers were doing work assistive technology could not see, and the block was skipped rather than announced. It is now `role="region"` with a label. This is the finding `no-static-element-interactions` reported.

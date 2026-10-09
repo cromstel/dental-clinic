@@ -21,7 +21,19 @@ export function Manifesto() {
               className={
                 "inline-block " +
                 (i === arr.length - 2 || i === arr.length - 1 ? "text-ochre " : "") +
-                (i === arr.length - 1 ? "italic" : "")
+                // The emphasised word used to be `italic` on the display face.
+                // Clash Display ships no italic face — every entry in the
+                // `src` array is style: "normal" — so the browser synthesised
+                // an oblique by shearing the upright outlines, which is why the
+                // word did not match the rest of the headline. Setting it in
+                // the editorial serif instead gives it a real italic, which is
+                // what the class was asking for all along.
+                //
+                // `font-normal` is load-bearing for the same reason: the
+                // headline is `font-bold`, and Instrument Serif ships only
+                // 400, so inheriting 700 would synthesise a bold and trade one
+                // fake style for another.
+                (i === arr.length - 1 ? "font-editorial font-normal italic" : "")
               }
             >
               {word}&nbsp;

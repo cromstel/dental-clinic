@@ -83,13 +83,23 @@ export function Reviews() {
         >
           <div className="relative min-h-[18rem] border-t-2 border-cocoa pt-10 sm:min-h-[16rem]">
             <AnimatePresence mode="wait">
+              {/* Set as a quotation, not as display type. A testimonial in a
+                  geometric display face reads as advertising; the editorial
+                  serif italic reads as something the patient said. This is the
+                  rule the serif now follows across the site — it carries
+                  quotation and voice, while Clash carries structure and
+                  headlines. `leading-[1.22]` rather than the 1.1 this used at:
+                  a serif italic needs the extra leading to stay readable at
+                  30px. `tracking-tight` is dropped because negative tracking
+                  closes up a serif's joins. The footer keeps `not-italic`,
+                  which was defensive before and is now load-bearing. */}
               <motion.blockquote
                 key={index}
                 initial={{ y: 36 }}
                 animate={{ y: 0 }}
                 exit={{ y: -28 }}
                 transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-                className="font-display text-3xl font-semibold leading-[1.1] tracking-tight text-cocoa sm:text-5xl"
+                className="font-editorial text-3xl italic leading-[1.22] text-cocoa sm:text-5xl"
               >
                 “{active.quote}”
                 <footer className="mt-8 flex items-center gap-3 font-sans text-sm font-medium not-italic text-cocoa/70">
