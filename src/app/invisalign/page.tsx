@@ -34,6 +34,18 @@ export default function InvisalignPage() {
         <AlignerVisual />
       </section>
 
+      <section className="bg-cocoa py-16 text-bone lg:py-24">
+        <div className="mx-auto max-w-4xl px-6 text-center">
+          <p className="font-editorial text-xl italic leading-relaxed text-bone/80">
+            "The scan is the first real look at your own teeth you've had in years.
+            We show you the result before anything is committed."
+          </p>
+          <p className="mt-4 text-sm font-medium uppercase tracking-[0.25em] text-bone/60">
+            Dr. Ama Serwaa Boateng — Principal Dentist
+          </p>
+        </div>
+      </section>
+
       <InvisalignFeatures />
 
       <section className="border-t border-cocoa/10 bg-bone py-20 text-center">

@@ -42,9 +42,9 @@ export function FaqAccordion() {
                     <span className="hidden font-display text-sm font-semibold text-cocoa/70 tabular-nums sm:block">
                       0{i + 1}
                     </span>
-                    <span className="font-display text-xl font-semibold tracking-tight text-cocoa sm:text-2xl">
+                    <h3 className="font-display text-xl font-semibold tracking-tight text-cocoa sm:text-2xl">
                       {f.question}
-                    </span>
+                    </h3>
                   </span>
                   <motion.span
                     animate={reduce ? undefined : { rotate: isOpen ? 45 : 0 }}

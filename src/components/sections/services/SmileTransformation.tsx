@@ -142,7 +142,7 @@ function BeforeAfter({ t, className }: { t: (typeof transformations)[number]; cl
           {/* `font-sans` is load-bearing, not a preference: h1-h4 carry the
               display face from globals.css, so this micro-label inherited Clash
               Display and was the only thing on the site rendering it at 400. */}
-          <span className="font-sans text-sm font-normal text-cocoa/70">{t.detail}</span>
+          <span className="font-sans text-sm font-medium text-cocoa/70">{t.detail}</span>
         </h3>
       </Link>
 
