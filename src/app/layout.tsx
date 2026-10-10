@@ -12,6 +12,21 @@ import { CustomCursor } from "@/components/motion/CustomCursor";
 import "./globals.css";
 
 /**
+ * Poppins — heading face. Replaces Clash Display for h1–h4 per design direction.
+ * Self-hosted woff2, preloaded, weights 500/600/700 (the three the site uses).
+ */
+const poppins = localFont({
+  src: [
+    { path: "../assets/fonts/Poppins-500.woff2", weight: "500", style: "normal" },
+    { path: "../assets/fonts/Poppins-600.woff2", weight: "600", style: "normal" },
+    { path: "../assets/fonts/Poppins-700.woff2", weight: "700", style: "normal" },
+  ],
+  variable: "--font-poppins",
+  display: "swap",
+  preload: true,
+});
+
+/**
  * Only 600 and 700 ship. Measured across all seven rendered routes, the display
  * face resolved to exactly those two weights (247 and 107 elements); 400 and 500
  * resolved nowhere. 400's only consumer was a micro-label that had inherited the
@@ -227,7 +242,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html
       lang="en"
       data-scroll-behavior="smooth"
-      className={`${clash.variable} ${inter.variable} ${instrument.variable} ${cormorant.variable}`}
+      className={`${poppins.variable} ${clash.variable} ${inter.variable} ${instrument.variable} ${cormorant.variable}`}
     >
       <head>
         <script
