@@ -52,21 +52,21 @@ export function CustomCursor() {
     <>
       <motion.div
         aria-hidden
-        className="pointer-events-none fixed left-0 top-0 z-[100] flex h-0 w-0 items-center justify-center mix-blend-difference"
+        className="pointer-events-none fixed left-0 top-0 z-[100] flex h-0 w-0 items-center justify-center"
         style={{ x: mx, y: my }}
         animate={{ opacity: visible ? 1 : 0 }}
       >
-        <span className="-translate-x-1/2 -translate-y-1/2 h-2.5 w-2.5 rounded-full bg-white" />
+        <span className="-translate-x-1/2 -translate-y-1/2 h-2.5 w-2.5 rounded-full bg-cocoa ring-1 ring-bone/60" />
       </motion.div>
       <motion.div
         aria-hidden
-        className="pointer-events-none fixed left-0 top-0 z-[99] flex h-0 w-0 items-center justify-center mix-blend-difference"
+        className="pointer-events-none fixed left-0 top-0 z-[99] flex h-0 w-0 items-center justify-center"
         style={{ x: rx, y: ry }}
         animate={{ opacity: visible ? 1 : 0 }}
         transition={{ type: "spring", ...springCursorInner }}
       >
         <span
-          className="-translate-x-1/2 -translate-y-1/2 block rounded-full border border-white/60 transition-[width,height] duration-300 ease-out"
+          className="-translate-x-1/2 -translate-y-1/2 block rounded-full border border-cocoa/30 bg-bone/90 shadow-[0_0_0_1px_rgba(20,16,13,0.08)] transition-[width,height] duration-300 ease-out"
           style={{ width: hovering ? 64 : 36, height: hovering ? 64 : 36 }}
         />
       </motion.div>

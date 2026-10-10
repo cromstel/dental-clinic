@@ -103,7 +103,7 @@ export function Reviews() {
               >
                 “{active.quote}”
                 <footer className="mt-8 flex items-center gap-3 font-sans text-sm font-medium not-italic text-cocoa/70">
-                  <span className="h-2 w-2 rounded-full bg-ochre" />
+                  <span className="h-1.5 w-1.5 rounded-full bg-ochre" />
                   {active.author} · {active.location}
                 </footer>
               </motion.blockquote>

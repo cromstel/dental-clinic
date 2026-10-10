@@ -13,8 +13,17 @@ export const metadata: Metadata = {
   alternates: { canonical: "/invisalign" },
   openGraph: {
     title: "Clear Aligners in Accra | Accra Dental Clinic",
-    description: site.description,
+    description:
+      "Clear aligner treatment in Accra. A 3D scan instead of a mould, a simulation of the result before you commit, and aligners you remove to eat.",
     url: "/invisalign",
+    images: [
+      {
+        url: "/images/services/invisalign.avif",
+        width: 1200,
+        height: 900,
+        alt: `${site.fullName} — Clear aligners in Accra`,
+      },
+    ],
   },
 };
 
@@ -32,6 +41,18 @@ export default function InvisalignPage() {
 
       <section className="bg-bone pb-24">
         <AlignerVisual />
+      </section>
+
+      <section className="bg-cocoa py-16 text-bone lg:py-24">
+        <div className="mx-auto max-w-4xl px-6 text-center">
+          <p className="font-editorial text-xl italic leading-relaxed text-bone/80">
+            "The scan is the first real look at your own teeth you've had in years.
+            We show you the result before anything is committed."
+          </p>
+          <p className="mt-4 text-sm font-medium uppercase tracking-[0.25em] text-bone/60">
+            Dr. Ama Serwaa Boateng — Principal Dentist
+          </p>
+        </div>
       </section>
 
       <InvisalignFeatures />

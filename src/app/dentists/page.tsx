@@ -11,8 +11,17 @@ export const metadata: Metadata = {
   alternates: { canonical: "/dentists" },
   openGraph: {
     title: "Our Dentists in Osu, Accra | Accra Dental Clinic",
-    description: site.description,
+    description:
+      "Meet the clinicians at Accra Dental Clinic — cosmetic, restorative and implant dentistry, plus routine oral health.",
     url: "/dentists",
+    images: [
+      {
+        url: "/images/doctors/ama-serwaa-boateng.avif",
+        width: 800,
+        height: 1000,
+        alt: `${site.fullName} — Our clinicians in Osu, Accra`,
+      },
+    ],
   },
 };
 

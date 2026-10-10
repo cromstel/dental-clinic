@@ -4,11 +4,37 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useState, useRef, useCallback } from "react";
-import { Menu, X, Share, Phone, MapPin } from "lucide-react";
+import { Share, Phone, MapPin } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { navLinks, site, socials } from "@/content/accra";
 import { SmileGraphic } from "@/components/ui/SmileGraphic";
 import { Cta } from "@/components/ui/Cta";
+
+/** Custom animated hamburger — three bars that morph into an X when open. */
+function HamburgerIcon({ open }: { open: boolean }) {
+  return (
+    <span className="relative block h-3.5 w-5" aria-hidden>
+      <span
+        className={cn(
+          "absolute left-0 top-0 block h-[2px] w-full rounded-full bg-current transition-all duration-300 ease-out",
+          open && "top-1/2 -translate-y-1/2 rotate-45",
+        )}
+      />
+      <span
+        className={cn(
+          "absolute left-0 top-1/2 block h-[2px] w-full -translate-y-1/2 rounded-full bg-current transition-all duration-300 ease-out",
+          open && "opacity-0",
+        )}
+      />
+      <span
+        className={cn(
+          "absolute bottom-0 left-0 block h-[2px] w-full rounded-full bg-current transition-all duration-300 ease-out",
+          open && "bottom-1/2 translate-y-1/2 -rotate-45",
+        )}
+      />
+    </span>
+  );
+}
 
 export function Nav() {
   const pathname = usePathname();
@@ -191,8 +217,9 @@ export function Nav() {
               )}
               aria-label="Open menu"
               data-cursor="hover"
+              aria-expanded={open}
             >
-              <Menu className="h-5 w-5" />
+              <HamburgerIcon open={open} />
             </button>
           </div>
         </nav>
@@ -219,7 +246,7 @@ export function Nav() {
                 className="flex h-11 w-11 items-center justify-center rounded-full border border-cocoa/20 text-cocoa transition-colors hover:bg-cocoa hover:text-ochre"
                 aria-label="Close menu"
               >
-                <X className="h-5 w-5" />
+                <HamburgerIcon open={true} />
               </button>
             </div>
 
@@ -233,7 +260,7 @@ export function Nav() {
                 >
                   <Link
                     href={link.href}
-                    className="block font-display text-6xl font-bold tracking-tight text-cocoa"
+                    className="block font-display text-4xl font-bold tracking-tight text-cocoa sm:text-6xl"
                   >
                     {link.label}
                   </Link>

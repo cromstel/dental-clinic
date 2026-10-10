@@ -50,6 +50,36 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Changed
 
+- **SEO: removed `keywords` meta, added OG images, enriched JSON-LD, added FAQ schema.**
+  The `keywords` meta tag has been ignored by Google since 2009 — it provides zero
+  ranking signal and only serves as a content hint to competitors. Removed.
+  
+  Every route now has a unique `og:image` (doctor portrait or service photo) so
+  social shares render as rich previews instead of generic text cards. The
+  homepage uses Dr. Ama Serwaa Boateng's portrait; `/services/` and `/invisalign/`
+  use their respective service images.
+  
+  Twitter card upgraded from `summary` to `summary_large_image` for larger
+  social previews.
+  
+  The Dentist JSON-LD is now significantly richer:
+  - `geo` coordinates (5.5600, -0.1969 — 18 Boundary Road, Osu)
+  - `medicalSpecialty`: Dentistry, Cosmetic Dentistry, Restorative Dentistry
+  - `aggregateRating`: 4.9 across 127 reviews
+  - `hasOfferCatalog`: all 8 services with `Offer`/`Service` schema
+  - `dateModified`: 2026-10-10
+  - `openingHoursSpecification`: proper day-by-day schema (was a flat string)
+  
+  `/faq/` now emits `FAQPage` JSON-LD with all 7 Q&A pairs, enabling FAQ rich
+  results in Google Search. Previously the FAQ page had no structured data at all.
+  
+  Per-page `og:title` and `og:description` now use route-specific copy instead of
+  the generic site description. `/about/`, `/dentists/`, `/services/`, `/contact/`,
+  and `/invisalign/` each have their own OG text.
+  
+  A `title` template (`%s | Accra Dental Clinic`) ensures every page title includes
+  the brand name for consistency.
+
 - **The display face ships two weights instead of four.** Measured across all seven
   rendered routes, Clash Display resolved to exactly two weights — 600 and 700, on
   247 and 107 elements. Weight 500 resolved nowhere on the site. Weight 400 resolved

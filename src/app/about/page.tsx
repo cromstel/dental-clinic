@@ -14,8 +14,17 @@ export const metadata: Metadata = {
   alternates: { canonical: "/about" },
   openGraph: {
     title: "About Accra Dental Clinic | A private studio in Osu, Accra",
-    description: site.description,
+    description:
+      "A private dental studio on Boundary Road in Osu, Accra. Unhurried appointments, fixed quotes, and a plan you understand before anything begins.",
     url: "/about",
+    images: [
+      {
+        url: "/images/doctors/ama-serwaa-boateng.avif",
+        width: 800,
+        height: 1000,
+        alt: `${site.fullName} — The studio in Osu, Accra`,
+      },
+    ],
   },
 };
 
