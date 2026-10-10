@@ -50,6 +50,32 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Changed
 
+- **Poppins replaces Clash Display as the heading face.** The brief calls
+  for Poppins; h1–h4 now render in it. Self-hosted woff2 (500/600/700,
+  ~8 KB each, preloaded and vendored into `src/assets/fonts` so the build
+  stays network-independent). Clash Display stays loaded — it remains the
+  brand face for display moments — but no longer drives the headings. The
+  heading scale is now declared once, in `globals.css`, as fluid
+  `clamp()` values (h1 `clamp(2.5rem,6vw,4.5rem)` down to h4
+  `clamp(1.1rem,2vw,1.35rem)`) with line-heights of 1.05–1.3 tuned for
+  Poppins, replacing a uniform 0.98 that suited Clash's compact cut but
+  cramps Poppins. Body copy is a deliberate 16 px / 1.6 rather than the
+  browser default.
+
+- **The mobile menu icon is now a custom three-bar hamburger that morphs
+  into an X.** The previous icon was lucide's generic `Menu` glyph plus a
+  separate `X`; the open/close state depended on the user noticing a
+  different picture. The new icon is one component whose bars rotate and
+  collapse with a 300 ms ease, so the state is legible at a glance, and
+  it carries no icon-font dependency. Mobile menu links were `text-6xl`
+  at every width, which overflows small phones; they are `text-4xl`
+  below `sm` and `text-6xl` above.
+
+- **`.container-custom` had no horizontal padding.** Every section using
+  it sat flush against the viewport edge on mobile. It now pads 1.25 rem
+  inline, rising to 2.5 rem at `lg` and above — a single mobile-first
+  rule instead of a per-section sweep.
+
 - **SEO: removed `keywords` meta, added OG images, enriched JSON-LD, added FAQ schema.**
   The `keywords` meta tag has been ignored by Google since 2009 — it provides zero
   ranking signal and only serves as a content hint to competitors. Removed.
