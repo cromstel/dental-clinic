@@ -11,8 +11,17 @@ export const metadata: Metadata = {
   alternates: { canonical: "/contact" },
   openGraph: {
     title: "Contact & Book | Accra Dental Clinic, Osu, Accra",
-    description: site.description,
+    description:
+      "Request an appointment at Accra Dental Clinic in Osu, Accra. Call the studio, or send an enquiry and we will reply within a working day.",
     url: "/contact",
+    images: [
+      {
+        url: "/images/doctors/ama-serwaa-boateng.avif",
+        width: 800,
+        height: 1000,
+        alt: `${site.fullName} — Contact and booking in Osu, Accra`,
+      },
+    ],
   },
 };
 

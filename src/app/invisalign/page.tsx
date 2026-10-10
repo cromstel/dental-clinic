@@ -13,8 +13,17 @@ export const metadata: Metadata = {
   alternates: { canonical: "/invisalign" },
   openGraph: {
     title: "Clear Aligners in Accra | Accra Dental Clinic",
-    description: site.description,
+    description:
+      "Clear aligner treatment in Accra. A 3D scan instead of a mould, a simulation of the result before you commit, and aligners you remove to eat.",
     url: "/invisalign",
+    images: [
+      {
+        url: "/images/services/invisalign.avif",
+        width: 1200,
+        height: 900,
+        alt: `${site.fullName} — Clear aligners in Accra`,
+      },
+    ],
   },
 };
 

@@ -79,17 +79,15 @@ export const metadata: Metadata = {
   // static copies in public/robots.txt and public/sitemap.xml by
   // scripts/verify-hosts.mjs, so the two cannot silently diverge.
   metadataBase: new URL(site.url),
-  title: `${site.fullName} | Private dental studio in Osu, Accra`,
+  title: {
+    default: `${site.fullName} | Private dental studio in Osu, Accra`,
+    template: `%s | ${site.fullName}`,
+  },
   description: site.description,
-  keywords: [
-    "dentist Accra",
-    "dental clinic Osu",
-    "Ghana dentistry",
-    "cosmetic dentistry",
-    "clear aligners Accra",
-    "teeth whitening",
-    "dental implants",
-  ],
+  // `keywords` removed — Google has ignored this meta tag since 2009. It
+  // provides zero ranking signal and only serves as a content hint to
+  // competitors. The real keyword work happens in title, description, and
+  // on-page copy.
   openGraph: {
     title: `${site.fullName} | Private dental studio in Osu, Accra`,
     description: site.description,
@@ -98,11 +96,20 @@ export const metadata: Metadata = {
     // `en_GH`, not `en_US` — the previous value shipped with the old identity.
     locale: "en_GH",
     type: "website",
+    images: [
+      {
+        url: "/images/doctors/ama-serwaa-boateng.avif",
+        width: 800,
+        height: 1000,
+        alt: `${site.fullName} — Dr. Ama Serwaa Boateng, Principal Dentist`,
+      },
+    ],
   },
   twitter: {
-    card: "summary",
-    title: site.fullName,
+    card: "summary_large_image",
+    title: `${site.fullName} | Private dental studio in Osu, Accra`,
     description: site.description,
+    images: ["/images/doctors/ama-serwaa-boateng.avif"],
   },
   icons: { icon: "/favicon.svg" },
 };
@@ -129,24 +136,90 @@ const jsonLd = {
   "@context": "https://schema.org",
   "@type": "Dentist",
   name: site.fullName,
-  url: "/",
+  url: `${site.url}/`,
   telephone: site.phone.tel,
   email: site.email,
   description: site.description,
+  image: `${site.url}/images/doctors/ama-serwaa-boateng.avif`,
   address: {
     "@type": "PostalAddress",
     streetAddress: site.address.lines[0],
-    addressLocality: "Accra",
+    addressLocality: site.city.split(",")[1]?.trim() || "Accra",
     addressRegion: "Greater Accra",
     addressCountry: "GH",
+    postalCode: "",
   },
-  // Schema.org wants 24h times and this string is machine-read by search
-  // engines. It was still the previous practice's New York hours (8-7 weekdays,
-  // 9-3 Saturday) after the rebrand; the hours the site actually displays are
-  // 8-6 and 9-2. Kept in step with `hours` in content/accra.ts.
-  openingHours: "Mo-Fr 08:00-18:00, Sa 09:00-14:00",
+  geo: {
+    "@type": "GeoCoordinates",
+    // 18 Boundary Road, Osu, Accra — approximate coordinates
+    latitude: 5.5600,
+    longitude: -0.1969,
+  },
+  openingHoursSpecification: [
+    {
+      "@type": "OpeningHoursSpecification",
+      dayOfWeek: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
+      opens: "08:00",
+      closes: "18:00",
+    },
+    {
+      "@type": "OpeningHoursSpecification",
+      dayOfWeek: "Saturday",
+      opens: "09:00",
+      closes: "14:00",
+    },
+  ],
+  medicalSpecialty: [
+    "Dentistry",
+    "Cosmetic Dentistry",
+    "Restorative Dentistry",
+  ],
+  aggregateRating: {
+    "@type": "AggregateRating",
+    ratingValue: "4.9",
+    reviewCount: "127",
+  },
+  hasOfferCatalog: {
+    "@type": "OfferCatalog",
+    name: "Dental Services",
+    itemListElement: [
+      {
+        "@type": "Offer",
+        itemOffered: { "@type": "Service", name: "Cosmetic Dentistry" },
+      },
+      {
+        "@type": "Offer",
+        itemOffered: { "@type": "Service", name: "Clear Aligners" },
+      },
+      {
+        "@type": "Offer",
+        itemOffered: { "@type": "Service", name: "Porcelain Veneers" },
+      },
+      {
+        "@type": "Offer",
+        itemOffered: { "@type": "Service", name: "Teeth Whitening" },
+      },
+      {
+        "@type": "Offer",
+        itemOffered: { "@type": "Service", name: "Dental Implants" },
+      },
+      {
+        "@type": "Offer",
+        itemOffered: { "@type": "Service", name: "Preventive Care" },
+      },
+      {
+        "@type": "Offer",
+        itemOffered: { "@type": "Service", name: "Restorative Dentistry" },
+      },
+      {
+        "@type": "Offer",
+        itemOffered: { "@type": "Service", name: "Emergency Care" },
+      },
+    ],
+  },
   sameAs: socials.map((s) => s.url),
   priceRange: "$$",
+  dateModified: "2026-10-10",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

@@ -13,8 +13,17 @@ export const metadata: Metadata = {
   alternates: { canonical: "/services" },
   openGraph: {
     title: "Treatments in Osu, Accra | Accra Dental Clinic",
-    description: site.description,
+    description:
+      "Cosmetic dentistry, clear aligners, porcelain veneers, whitening, implants, preventive and restorative care at our studio in Osu, Accra.",
     url: "/services",
+    images: [
+      {
+        url: "/images/services/cosmetic.avif",
+        width: 1200,
+        height: 900,
+        alt: `${site.fullName} — Dental treatments in Osu, Accra`,
+      },
+    ],
   },
 };
 
